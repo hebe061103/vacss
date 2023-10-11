@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId = "com.zt.vacss"
-        minSdk = 23
+        minSdk = 31
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
