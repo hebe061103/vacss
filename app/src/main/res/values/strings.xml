@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">vacss</string>
     <string name="menu">菜单</string>
+    <string name="about">关于:</string>
 </resources>

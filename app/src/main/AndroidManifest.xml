@@ -12,8 +12,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
     <!--蓝牙扫描-->
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
-        android:usesPermissionFlags="neverForLocation"
-        tools:targetApi="S"/>
+        android:usesPermissionFlags="neverForLocation" />
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -22,8 +21,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Vacss"
-        tools:targetApi="31">
+        android:theme="@style/Theme.Vacss">
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -32,7 +30,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".BleClientActivity"/>
+        <activity android:name="com.zt.vacss.BleClientActivity"/>
+        <activity android:name="com.zt.vacss.about" />
 
     </application>
 
