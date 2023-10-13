@@ -38,6 +38,9 @@ public class MainActivity extends AppCompatActivity {
             if (itemId == R.id.scan_bt) {
                 Intent intent = new Intent(MainActivity.this, BleClientActivity.class);
                 startActivities(new Intent[]{intent});
+            }else if (itemId == R.id.bond_bt) {
+                Intent intent = new Intent(MainActivity.this, bond_bt.class);
+                startActivities(new Intent[]{intent});
             } else if (itemId == R.id.about) {
                 Intent intent = new Intent(MainActivity.this, about.class);
                 startActivities(new Intent[]{intent});

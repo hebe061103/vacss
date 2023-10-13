@@ -40,7 +40,6 @@ public class BleClientActivity extends AppCompatActivity {
     private Thread mToastThread;
     private boolean isScan_ing = false;
     private RecyclerView mRecyclerView;
-    private Button re_scan;
 
     private void getBlueState(int blueState) {
         switch (blueState) {
@@ -117,8 +116,8 @@ public class BleClientActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bluetooth_scan);
         mRecyclerView = findViewById(R.id.rv_device_list);
-        re_scan = findViewById(R.id.re_scan);
-        re_scan.setOnClickListener(view -> searchBluetooth());
+        Button re_scan = findViewById(R.id.re_scan);
+        re_scan.setOnClickListener(v -> searchBluetooth());
         registerBluetoothListener();
         initList();
         searchBluetooth();
@@ -174,24 +173,21 @@ public class BleClientActivity extends AppCompatActivity {
     }
 
     @SuppressLint("MissingPermission")
-    private void getPairedDevices() {
-        @SuppressLint("MissingPermission") Set<BluetoothDevice> devices = mBluetoothAdapter.getBondedDevices();
-        Log.d(TAG, "己配对设备数量: =" + devices.size());
-        for (BluetoothDevice bondDevice : devices) {
-            Log.d(TAG, "己配对设备名: =" + bondDevice.getName() + "设备地址:" + bondDevice.getAddress());
-        }
-    }
-
-    @SuppressLint("MissingPermission")
     private void foundBlueDevice(Intent intent) {
         BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
         assert device != null;
-        showToast(device.getName()+device.getAddress());
             if (!mDeviceList.contains(device)){
                 mDeviceList.add(device);
-                BlueDeviceItemAdapter mListview = new BlueDeviceItemAdapter(mDeviceList,this);
-                mRecyclerView.setAdapter(mListview);
+                mRecyclerView.addItemDecoration(new LinearSpacingItemDecoration(this,5));
+                BlueDeviceItemAdapter mRecycler = new BlueDeviceItemAdapter(mDeviceList, this);
+                mRecyclerView.setAdapter(mRecycler);
                 mRecyclerView.addItemDecoration(new DividerItemDecoration(this,DividerItemDecoration.VERTICAL));
+                mRecycler.setRecyclerItemClickListener(new BlueDeviceItemAdapter.OnRecyclerItemClickListener() {
+                    @Override
+                    public void OnRecyclerItemClickListener(int postion) {
+                        Log.e("leo", "OnRecyclerItemClickListener: "+ postion );
+                    }
+                });
             }
         }
     private void showLog(String text){

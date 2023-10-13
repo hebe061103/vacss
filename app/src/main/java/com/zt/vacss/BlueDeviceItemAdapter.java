@@ -51,6 +51,25 @@ public class BlueDeviceItemAdapter extends RecyclerView.Adapter<BlueDeviceItemAd
             super(itemView);
             //找到控件
             tv = itemView.findViewById(R.id.bt_text);
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    //判断点击MonItemClickListener是否为空
+                    if (MonItemClickListener !=null) {
+                        //对MonItemClickListener进行点击
+                        MonItemClickListener.OnRecyclerItemClickListener(getAdapterPosition());
+                    }
+                }
+            });
         }
+    }
+    private static OnRecyclerItemClickListener MonItemClickListener;
+    //设置点击监听事件用于外部引用
+    public void setRecyclerItemClickListener(OnRecyclerItemClickListener listener){
+        MonItemClickListener=listener;
+    }
+    //创建点击类接口
+    public interface OnRecyclerItemClickListener{
+        void OnRecyclerItemClickListener(int postion);
     }
 }
