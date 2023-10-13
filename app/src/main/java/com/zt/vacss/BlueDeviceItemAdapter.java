@@ -6,45 +6,51 @@ import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-public class BlueDeviceItemAdapter extends RecyclerView.Adapter<BlueDeviceItemAdapter.myViewHolder> {
-    private final List<BluetoothDevice> mDeviceList;
-    private final Context context;
+
+public class BlueDeviceItemAdapter extends RecyclerView.Adapter<BlueDeviceItemAdapter.MyViewHolder> {
+    private final List<BluetoothDevice> mDeviceList;    //接受数据
+    private final Context context;    //接受上下文
 
     public BlueDeviceItemAdapter(List<BluetoothDevice> mDeviceList, Context context) {
         this.mDeviceList = mDeviceList;
         this.context = context;
     }
+
     @NonNull
     @Override
-    public BlueDeviceItemAdapter.myViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = View.inflate(context, R.layout.activity_bluetooth_scan, null);
-        return new myViewHolder(view);
+    public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        //拿到布局
+        View view = View.inflate(context, R.layout.blueinfo, null);
+        //在ViewHolder中进行编码操作
+        return new MyViewHolder(view);
     }
 
-    @SuppressLint("MissingPermission")
+    @SuppressLint({"MissingPermission", "SetTextI18n"})
     @Override
-    public void onBindViewHolder(@NonNull BlueDeviceItemAdapter.myViewHolder holder, int position) {
-        holder.bv.setText(mDeviceList.get(position).getName());
-        Toast.makeText(context, mDeviceList.get(position).getName(), Toast.LENGTH_SHORT).show();
+    public void onBindViewHolder(MyViewHolder holder, int position) {
+        holder.tv.setText(mDeviceList.get(position).getName() + "  " + mDeviceList.get(position).getAddress());
     }
 
     @Override
     public int getItemCount() {
-        return mDeviceList==null ? 0 :mDeviceList.size();
+        return mDeviceList == null ? 0 : mDeviceList.size();
     }
 
-    public static class myViewHolder extends RecyclerView.ViewHolder{
-        private final TextView bv;
-        public myViewHolder(@NonNull View itemView) {
+    //创建ViewHolder类继承RecyclerView.ViewHolder
+    public static class MyViewHolder extends RecyclerView.ViewHolder {
+
+        private final TextView tv;
+
+        public MyViewHolder(View itemView) {
             super(itemView);
-            bv = itemView.findViewById(R.id.bv);
+            //找到控件
+            tv = itemView.findViewById(R.id.bt_text);
         }
     }
 }

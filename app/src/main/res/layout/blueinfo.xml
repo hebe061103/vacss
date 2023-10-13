@@ -4,9 +4,9 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/bv"
-        android:layout_width="wrap_content"
+        android:id="@+id/bt_text"
+        android:textSize="18sp"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="TextView" />
+        android:layout_weight="1" />
 </LinearLayout>

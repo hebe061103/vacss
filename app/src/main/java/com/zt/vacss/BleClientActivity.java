@@ -15,11 +15,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -38,6 +40,7 @@ public class BleClientActivity extends AppCompatActivity {
     private Thread mToastThread;
     private boolean isScan_ing = false;
     private RecyclerView mRecyclerView;
+    private Button re_scan;
 
     private void getBlueState(int blueState) {
         switch (blueState) {
@@ -114,24 +117,21 @@ public class BleClientActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bluetooth_scan);
         mRecyclerView = findViewById(R.id.rv_device_list);
-        Button click_scan = findViewById(R.id.click_scan);
-        click_scan.setOnClickListener(view -> searchBluetooth());
+        re_scan = findViewById(R.id.re_scan);
+        re_scan.setOnClickListener(view -> searchBluetooth());
         registerBluetoothListener();
         initList();
         searchBluetooth();
     }
 
     private void initList() {
+        mDeviceList = new ArrayList<>();
         //设置固定大小
         mRecyclerView.setHasFixedSize(true);
         //创建线性布局
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         layoutManager.setOrientation(RecyclerView.VERTICAL);
         mRecyclerView.setLayoutManager(layoutManager);
-        //创建适配器，并且设置
-        mDeviceList = new ArrayList<>();
-        BlueDeviceItemAdapter mListAdapter = new BlueDeviceItemAdapter(mDeviceList, this);
-        mRecyclerView.setAdapter(mListAdapter);
     }
 
     public void searchBluetooth() {
@@ -173,33 +173,27 @@ public class BleClientActivity extends AppCompatActivity {
         showToast("扫描完毕!");
     }
 
+    @SuppressLint("MissingPermission")
     private void getPairedDevices() {
-        //获取已经配对的蓝牙设备
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        Set<BluetoothDevice> devices = mBluetoothAdapter.getBondedDevices();
+        @SuppressLint("MissingPermission") Set<BluetoothDevice> devices = mBluetoothAdapter.getBondedDevices();
         Log.d(TAG, "己配对设备数量: =" + devices.size());
         for (BluetoothDevice bondDevice : devices) {
             Log.d(TAG, "己配对设备名: =" + bondDevice.getName() + "设备地址:" + bondDevice.getAddress());
         }
     }
 
+    @SuppressLint("MissingPermission")
     private void foundBlueDevice(Intent intent) {
         BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-        if (device != null) {
+        assert device != null;
+        showToast(device.getName()+device.getAddress());
             if (!mDeviceList.contains(device)){
                 mDeviceList.add(device);
+                BlueDeviceItemAdapter mListview = new BlueDeviceItemAdapter(mDeviceList,this);
+                mRecyclerView.setAdapter(mListview);
+                mRecyclerView.addItemDecoration(new DividerItemDecoration(this,DividerItemDecoration.VERTICAL));
             }
         }
-    }
     private void showLog(String text){
         Log.d(TAG, "showLog: "+text);
     }

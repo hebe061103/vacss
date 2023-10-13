@@ -8,8 +8,8 @@
 
     <ImageView
         android:id="@+id/menu_img"
-        android:layout_width="43dp"
-        android:layout_height="41dp"
+        android:layout_width="51dp"
+        android:layout_height="51dp"
         android:layout_marginStart="4dp"
         android:layout_marginTop="4dp"
         android:contentDescription="@string/menu"
