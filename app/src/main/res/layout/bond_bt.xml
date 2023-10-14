@@ -7,7 +7,7 @@
         android:id="@+id/bond_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:divider="@android:color/holo_blue_dark"
-        android:dividerHeight="1dp"
-        />
+        android:listSelector="#7851BD"
+        android:divider="#655E5E"
+        android:dividerHeight="1dp" />
 </LinearLayout>

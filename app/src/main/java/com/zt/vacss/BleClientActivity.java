@@ -1,9 +1,9 @@
 package com.zt.vacss;
 
-import static android.content.ContentValues.TAG;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -14,9 +14,12 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Vibrator;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,7 +30,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 
 /** @noinspection deprecation*/
@@ -37,9 +39,11 @@ public class BleClientActivity extends AppCompatActivity {
     private static final int BLUE_START_STATE = 1;
     private static final int BLUE_ACTION_DISCOVERY_STARTED = 2;
     private static final int BLUE_ACTION_DISCOVERY_FINISHED = 3;
-    private Thread mToastThread;
-    private boolean isScan_ing = false;
     private RecyclerView mRecyclerView;
+    private Button re_scan;
+    private Boolean scanStatus;
+    private ProgressDialog pd;
+    private int item_locale;
 
     private void getBlueState(int blueState) {
         switch (blueState) {
@@ -64,7 +68,7 @@ public class BleClientActivity extends AppCompatActivity {
                 getBlueState(message.arg1);
                 break;
             case BleClientActivity.BLUE_ACTION_DISCOVERY_STARTED:
-                actionDiscovery();
+                searchBluetooth();
                 break;
             case BleClientActivity.BLUE_ACTION_DISCOVERY_FINISHED:
                 stopDiscovery();
@@ -116,8 +120,18 @@ public class BleClientActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bluetooth_scan);
         mRecyclerView = findViewById(R.id.rv_device_list);
-        Button re_scan = findViewById(R.id.re_scan);
-        re_scan.setOnClickListener(v -> searchBluetooth());
+        re_scan = findViewById(R.id.re_scan);
+        re_scan.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                goAnim();
+                if (!scanStatus) {
+                    mDeviceList.clear();
+                    BlueDeviceItemAdapter mRecycler = new BlueDeviceItemAdapter(mDeviceList, BleClientActivity.this);
+                    mRecyclerView.setAdapter(mRecycler);
+                    BleClientActivity.this.searchBluetooth();}
+            }
+        });
         registerBluetoothListener();
         initList();
         searchBluetooth();
@@ -147,59 +161,80 @@ public class BleClientActivity extends AppCompatActivity {
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
+        scanStatus=true;
         mBluetoothAdapter.startDiscovery();
-    }
-
-    /** @noinspection BusyWait*/
-    private void actionDiscovery() {
-        mToastThread = new Thread(() -> {
-            isScan_ing = true;
-            while (isScan_ing) {
-                try {
-                    showToast("扫描中......");
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        mToastThread.start();
+        re_scan.setText("正在扫描");
+        pd = new ProgressDialog(this);
+        pd.setMessage("正在扫描,请稍等......");
+        pd.show();
+        pd.setCancelable(false);
     }
 
     private void stopDiscovery() {
-        isScan_ing = false;
-        mToastThread = null;
-        showToast("扫描完毕!");
+        scanStatus=false;
+        pd.dismiss();
+        re_scan.setText("重新扫描");
     }
 
     @SuppressLint("MissingPermission")
     private void foundBlueDevice(Intent intent) {
         BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-        assert device != null;
-            if (!mDeviceList.contains(device)){
+        if (!mDeviceList.contains(device)) {
+            assert device != null;
+            if (!(device.getName() == null)) {
                 mDeviceList.add(device);
-                mRecyclerView.addItemDecoration(new LinearSpacingItemDecoration(this,5));
+                mRecyclerView.addItemDecoration(new LinearSpacingItemDecoration(this, 10));
                 BlueDeviceItemAdapter mRecycler = new BlueDeviceItemAdapter(mDeviceList, this);
                 mRecyclerView.setAdapter(mRecycler);
-                mRecyclerView.addItemDecoration(new DividerItemDecoration(this,DividerItemDecoration.VERTICAL));
-                mRecycler.setRecyclerItemClickListener(new BlueDeviceItemAdapter.OnRecyclerItemClickListener() {
+                mRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL)); //添加分隔线
+                mRecycler.setRecyclerItemLongClickListener(new BlueDeviceItemAdapter.OnRecyclerItemLongClickListener() {
                     @Override
-                    public void OnRecyclerItemClickListener(int postion) {
-                        Log.e("leo", "OnRecyclerItemClickListener: "+ postion );
+                    public void onRecyclerItemLongClickListener(int postion) {
+                        goAnim();
+                        item_locale=postion;
+                        showPopupMenu(mRecyclerView);
                     }
                 });
             }
         }
+    }
+    @SuppressLint("MissingPermission")
+    private void showPopupMenu(final View view) {
+        final PopupMenu popupMenu = new PopupMenu(this, view, Gravity.END);
+        //menu 布局
+        popupMenu.getMenuInflater().inflate(R.menu.connectmenu, popupMenu.getMenu());
+        //点击事件
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.bond_item) {
+                goAnim();
+                mDeviceList.get(item_locale).createBond();
+            }else if (itemId == R.id.connect_item) {
+                goAnim();
+            } else if (itemId == R.id.disconnect_item) {
+                goAnim();
+            }
+            return false;
+        });
+        //显示菜单，不要少了这一步
+        popupMenu.show();
+    }
+
+    //抖动震动
+    protected void goAnim(){
+        // 震动效果的系统服务
+        Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+        vibrator.vibrate(40);//振动0.5秒
+        // 下边是可以使震动有规律的震动  -1：表示不重复 0：循环的震动
+    }
     private void showLog(String text){
-        Log.d(TAG, "showLog: "+text);
+        Log.d("vsLog", "showLog: " + text);
     }
     private void showToast(String text) {
         Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
     }
 
     protected void onDestroy() {
-        isScan_ing = false;
-        mToastThread = null;
         unregisterReceiver(mBluetoothReceiver);
         super.onDestroy();
     }

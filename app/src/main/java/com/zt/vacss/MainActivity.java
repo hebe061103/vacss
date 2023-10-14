@@ -9,11 +9,13 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
+/** @noinspection deprecation*/
 public class MainActivity extends AppCompatActivity {
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -23,8 +25,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         startEnableBluetooth();
         ImageView menu_bt = findViewById(R.id.menu_img);
-        menu_bt.setOnClickListener(view -> showPopupMenu(menu_bt));
-
+        menu_bt.setOnClickListener(view -> {
+            goAnim();
+            MainActivity.this.showPopupMenu(menu_bt);
+        });
     }
 
 
@@ -36,12 +40,15 @@ public class MainActivity extends AppCompatActivity {
         popupMenu.setOnMenuItemClickListener(item -> {
             int itemId = item.getItemId();
             if (itemId == R.id.scan_bt) {
+                goAnim();
                 Intent intent = new Intent(MainActivity.this, BleClientActivity.class);
                 startActivities(new Intent[]{intent});
             }else if (itemId == R.id.bond_bt) {
+                goAnim();
                 Intent intent = new Intent(MainActivity.this, bond_bt.class);
                 startActivities(new Intent[]{intent});
             } else if (itemId == R.id.about) {
+                goAnim();
                 Intent intent = new Intent(MainActivity.this, about.class);
                 startActivities(new Intent[]{intent});
             }
@@ -73,6 +80,12 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(intent, 200);
         }
+    }
+    protected void goAnim(){
+        // 震动效果的系统服务
+        Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+        vibrator.vibrate(40);//振动0.5秒
+        // 下边是可以使震动有规律的震动  -1：表示不重复 0：循环的震动
     }
     private void showToast(String text) {
         Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
