@@ -44,7 +44,103 @@ public class BleClientActivity extends AppCompatActivity {
     private Boolean scanStatus;
     private ProgressDialog pd;
     private int item_locale;
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_bluetooth_scan);
+        mRecyclerView = findViewById(R.id.rv_device_list);
+        re_scan = findViewById(R.id.re_scan);
+        re_scan.setOnClickListener(v -> {
+            goAnim();
+            if (!scanStatus) {
+                mDeviceList.clear();
+                BlueDeviceItemAdapter mRecycler = new BlueDeviceItemAdapter(mDeviceList, BleClientActivity.this);
+                mRecyclerView.setAdapter(mRecycler);
+                BleClientActivity.this.searchBluetooth();}
+        });
+        registerBluetoothListener();
+        searchBluetooth();
+    }
 
+    private void initList() {
+        mDeviceList = new ArrayList<>();
+        //设置固定大小
+        mRecyclerView.setHasFixedSize(true);
+        //创建线性布局
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager.setOrientation(RecyclerView.VERTICAL);
+        mRecyclerView.setLayoutManager(layoutManager);
+    }
+
+    public void searchBluetooth() {
+        if (mBluetoothAdapter == null) {
+            return;
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        scanStatus=true;
+        mBluetoothAdapter.startDiscovery();
+        re_scan.setText("正在扫描");
+        pd = new ProgressDialog(this);
+        pd.setMessage("正在扫描,请稍等......");
+        pd.show();
+        pd.setCancelable(false);
+        initList();
+    }
+
+    private void stopDiscovery() {
+        scanStatus=false;
+        pd.dismiss();
+        re_scan.setText("重新扫描");
+    }
+
+    @SuppressLint("MissingPermission")
+    private void foundBlueDevice(Intent intent) {
+        BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+        if (!mDeviceList.contains(device)) {
+            assert device != null;
+            if (!(device.getName() == null)) {
+                mDeviceList.add(device);
+                mRecyclerView.addItemDecoration(new LinearSpacingItemDecoration(this, 10));
+                BlueDeviceItemAdapter mRecycler = new BlueDeviceItemAdapter(mDeviceList, this);
+                mRecyclerView.setAdapter(mRecycler);
+                mRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL)); //添加分隔线
+                mRecycler.setRecyclerItemLongClickListener(postion -> {
+                    goAnim();
+                    item_locale=postion;
+                    showPopupMenu(mRecyclerView.getChildAt(postion));
+                });
+            }
+        }
+    }
+    @SuppressLint("MissingPermission")
+    private void showPopupMenu(final View view) {
+        final PopupMenu popupMenu = new PopupMenu(this, view, Gravity.END);
+        //menu 布局
+        popupMenu.getMenuInflater().inflate(R.menu.connectmenu, popupMenu.getMenu());
+        //点击事件
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.bond_item) {
+                goAnim();
+                mDeviceList.get(item_locale).createBond();
+            }else if (itemId == R.id.connect_item) {
+                goAnim();
+            } else if (itemId == R.id.disconnect_item) {
+                goAnim();
+            }
+            return false;
+        });
+        //显示菜单，不要少了这一步
+        popupMenu.show();
+    }
     private void getBlueState(int blueState) {
         switch (blueState) {
             case BluetoothAdapter.STATE_TURNING_ON:
@@ -116,115 +212,11 @@ public class BleClientActivity extends AppCompatActivity {
         registerReceiver(mBluetoothReceiver, filter);
     }
 
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_bluetooth_scan);
-        mRecyclerView = findViewById(R.id.rv_device_list);
-        re_scan = findViewById(R.id.re_scan);
-        re_scan.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                goAnim();
-                if (!scanStatus) {
-                    mDeviceList.clear();
-                    BlueDeviceItemAdapter mRecycler = new BlueDeviceItemAdapter(mDeviceList, BleClientActivity.this);
-                    mRecyclerView.setAdapter(mRecycler);
-                    BleClientActivity.this.searchBluetooth();}
-            }
-        });
-        registerBluetoothListener();
-        initList();
-        searchBluetooth();
-    }
-
-    private void initList() {
-        mDeviceList = new ArrayList<>();
-        //设置固定大小
-        mRecyclerView.setHasFixedSize(true);
-        //创建线性布局
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        layoutManager.setOrientation(RecyclerView.VERTICAL);
-        mRecyclerView.setLayoutManager(layoutManager);
-    }
-
-    public void searchBluetooth() {
-        if (mBluetoothAdapter == null) {
-            return;
-        }
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        scanStatus=true;
-        mBluetoothAdapter.startDiscovery();
-        re_scan.setText("正在扫描");
-        pd = new ProgressDialog(this);
-        pd.setMessage("正在扫描,请稍等......");
-        pd.show();
-        pd.setCancelable(false);
-    }
-
-    private void stopDiscovery() {
-        scanStatus=false;
-        pd.dismiss();
-        re_scan.setText("重新扫描");
-    }
-
-    @SuppressLint("MissingPermission")
-    private void foundBlueDevice(Intent intent) {
-        BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-        if (!mDeviceList.contains(device)) {
-            assert device != null;
-            if (!(device.getName() == null)) {
-                mDeviceList.add(device);
-                mRecyclerView.addItemDecoration(new LinearSpacingItemDecoration(this, 10));
-                BlueDeviceItemAdapter mRecycler = new BlueDeviceItemAdapter(mDeviceList, this);
-                mRecyclerView.setAdapter(mRecycler);
-                mRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL)); //添加分隔线
-                mRecycler.setRecyclerItemLongClickListener(new BlueDeviceItemAdapter.OnRecyclerItemLongClickListener() {
-                    @Override
-                    public void onRecyclerItemLongClickListener(int postion) {
-                        goAnim();
-                        item_locale=postion;
-                        showPopupMenu(mRecyclerView);
-                    }
-                });
-            }
-        }
-    }
-    @SuppressLint("MissingPermission")
-    private void showPopupMenu(final View view) {
-        final PopupMenu popupMenu = new PopupMenu(this, view, Gravity.END);
-        //menu 布局
-        popupMenu.getMenuInflater().inflate(R.menu.connectmenu, popupMenu.getMenu());
-        //点击事件
-        popupMenu.setOnMenuItemClickListener(item -> {
-            int itemId = item.getItemId();
-            if (itemId == R.id.bond_item) {
-                goAnim();
-                mDeviceList.get(item_locale).createBond();
-            }else if (itemId == R.id.connect_item) {
-                goAnim();
-            } else if (itemId == R.id.disconnect_item) {
-                goAnim();
-            }
-            return false;
-        });
-        //显示菜单，不要少了这一步
-        popupMenu.show();
-    }
-
     //抖动震动
     protected void goAnim(){
         // 震动效果的系统服务
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-        vibrator.vibrate(40);//振动0.5秒
+        vibrator.vibrate(30);//振动0.5秒
         // 下边是可以使震动有规律的震动  -1：表示不重复 0：循环的震动
     }
     private void showLog(String text){

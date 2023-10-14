@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
     protected void goAnim(){
         // 震动效果的系统服务
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-        vibrator.vibrate(40);//振动0.5秒
+        vibrator.vibrate(30);//振动0.5秒
         // 下边是可以使震动有规律的震动  -1：表示不重复 0：循环的震动
     }
     private void showToast(String text) {

@@ -23,7 +23,8 @@
         android:text="蓝牙列表"
         app:layout_constraintBottom_toTopOf="@+id/rv_device_list"
         app:layout_constraintTop_toTopOf="parent"
-        tools:layout_editor_absoluteX="26dp" />
+        tools:layout_editor_absoluteX="26dp"
+        tools:ignore="HardcodedText" />
 
     <Button
         android:id="@+id/re_scan"

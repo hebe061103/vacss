@@ -38,15 +38,15 @@ public class bond_bt extends AppCompatActivity {
                 new AlertDialog.Builder(bond_bt.this)
                         .setTitle("取消配对")
                         .setMessage("确定吗?")
-                        .setPositiveButton("是", new DialogInterface.OnClickListener() {
+                        .setPositiveButton("取消", null)
+                        .setNegativeButton("确定", new DialogInterface.OnClickListener() {
                             @SuppressLint("MissingPermission")
                             @Override
-                            public void onClick(DialogInterface dialogInterface, int b) {
+                            public void onClick(DialogInterface dialogInterface, int c) {
                                 Toast.makeText(bond_bt.this,mList.get((int) l).getName(), Toast.LENGTH_SHORT).show();
                                 unpairDevice(mList.get((int) l));
                             }
                         })
-                        .setNegativeButton("否", null)
                         .show();
             }
         });
