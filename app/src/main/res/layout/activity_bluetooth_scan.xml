@@ -11,33 +11,44 @@
         android:layout_height="562dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.515"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.323" />
+        app:layout_constraintVertical_bias="0.284" />
 
     <TextView
-        android:gravity="center"
-        android:textSize="25sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:text="蓝牙列表"
+        android:textSize="25sp"
         app:layout_constraintBottom_toTopOf="@+id/rv_device_list"
         app:layout_constraintTop_toTopOf="parent"
-        tools:layout_editor_absoluteX="26dp"
-        tools:ignore="HardcodedText" />
+        tools:ignore="HardcodedText"
+        tools:layout_editor_absoluteX="26dp" />
 
     <Button
         android:id="@+id/re_scan"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/rv_device_list"
-        app:layout_constraintVertical_bias="0.757"
         tools:ignore="SpeakableTextPresentCheck" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/tixin"
+        android:textSize="15sp"
+        app:layout_constraintBottom_toTopOf="@+id/re_scan"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.086"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rv_device_list" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
