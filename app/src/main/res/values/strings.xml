@@ -2,4 +2,9 @@
     <string name="app_name">vacss</string>
     <string name="menu">菜单</string>
     <string name="about">关于:</string>
+    <string name="engineering">工程模式</string>
+    <string name="server_mode">服务器模式</string>
+    <string name="client_mode">客户端模式</string>
+    <string name="blue_uuid_info">常用蓝牙服务对应的UUID码</string>
+    <string name="uuid_info">蓝牙串口服务 00001101-0000-1000-8000-00805F9B34FB\n拨号网络服务 00001103-0000-1000-8000-00805F9B34FB\n信息同步服务 00001104-0000-1000-8000-00805F9B34FB\n文件传输服务 00001106-0000-1000-8000-00805F9B34FB\n个人局域网服务 00001115-0000-1000-8000-00805F9B34FB</string>
 </resources>

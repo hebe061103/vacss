@@ -34,6 +34,8 @@
         <activity android:name="com.zt.vacss.BleClientActivity"/>
         <activity android:name="com.zt.vacss.bond_bt"/>
         <activity android:name="com.zt.vacss.about" />
+        <activity android:name="com.zt.vacss.Engineeringmode" />
+        <activity android:name="com.zt.vacss.BleServerActivity"/>
 
     </application>
 

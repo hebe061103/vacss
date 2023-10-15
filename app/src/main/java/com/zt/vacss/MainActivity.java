@@ -1,6 +1,7 @@
 package com.zt.vacss;
 
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -10,13 +11,16 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Vibrator;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
+import pub.devrel.easypermissions.EasyPermissions;
+
 /** @noinspection deprecation*/
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements EasyPermissions.RationaleCallbacks{
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
     @Override
@@ -81,6 +85,12 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(intent, 200);
         }
     }
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        // 回调结果传递给EasyPermission
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
+    }
     protected void goAnim(){
         // 震动效果的系统服务
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
@@ -95,7 +105,21 @@ public class MainActivity extends AppCompatActivity {
         startEnableBluetooth();
         super.onResume();
     }
+    private void showLog(String text){
+        Log.d("vsLog", "showLog: " + text);
+    }
     protected void onDestroy() {
         super.onDestroy();
+    }
+
+    @Override
+    public void onRationaleAccepted(int requestCode) {
+        showLog("权限申请成功!");
+    }
+
+    @Override
+    public void onRationaleDenied(int requestCode) {
+        showLog("用户巳拒绝权限申请!");
+        finish();
     }
 }
