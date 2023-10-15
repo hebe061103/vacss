@@ -23,6 +23,8 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,10 +42,12 @@ import pub.devrel.easypermissions.EasyPermissions;
 public class BleServerActivity extends AppCompatActivity implements EasyPermissions.RationaleCallbacks {
     private TextView mStatusView;
     private TextView mClientName;
+    private Button start_sever;
 
     private BluetoothManager mBluetoothManager;
     private BluetoothLeAdvertiser mBluetoothLeAdvertiser;
     private BluetoothGattServer mBluetoothGattServer;
+    private boolean success;
     private final BluetoothGattServerCallback mBluetoothGattServerCallback = new BluetoothGattServerCallback() {
         //设备连接/断开连接回调
         @SuppressLint({"MissingPermission", "SetTextI18n"})
@@ -137,6 +141,7 @@ public class BleServerActivity extends AppCompatActivity implements EasyPermissi
         public void onStartSuccess(AdvertiseSettings settingsInEffect) {
             super.onStartSuccess(settingsInEffect);
             showToast("server 广播成功");
+            success=true;
             initServices(BleServerActivity.this);
         }
 
@@ -144,6 +149,7 @@ public class BleServerActivity extends AppCompatActivity implements EasyPermissi
         public void onStartFailure(int errorCode) {
             super.onStartFailure(errorCode);
             showToast("server 广播失败");
+            success=false;
             startBroadcastFail("On startAdvertising");
         }
     };
@@ -152,13 +158,33 @@ public class BleServerActivity extends AppCompatActivity implements EasyPermissi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ble_server);
+        start_sever=findViewById(R.id.start_server);
+        start_sever.setText("启动服务");
+        initClick();
         initView();
+    }
+
+    private void initClick() {
+        start_sever.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(!success) {
+                    startServer();
+                }else {
+                    stopBroadcast();
+                }
+            }
+        });
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         stopBroadcast();
+    }
+    protected void onResume() {
+        if(success){start_sever.setText("停止服务");}else {start_sever.setText("启动服务");}
+        super.onResume();
     }
 
     private void initView() {
@@ -215,6 +241,7 @@ public class BleServerActivity extends AppCompatActivity implements EasyPermissi
         AdvertiseData data = buildAdvertiseData();
         if(mBluetoothLeAdvertiser!=null){
             mBluetoothLeAdvertiser.startAdvertising(settings,data,mAdertiseCallback);
+            start_sever.setText("停止服务");
         }
     }
 
@@ -222,6 +249,9 @@ public class BleServerActivity extends AppCompatActivity implements EasyPermissi
     private void stopBroadcast() {
         if (mBluetoothLeAdvertiser!=null){
             mBluetoothLeAdvertiser.stopAdvertising(mAdertiseCallback);
+            start_sever.setText("启动服务");
+            showToast("服务停止广播");
+            isBroadcasting(false);
         }
     }
 
