@@ -7,4 +7,7 @@
     <item
         android:id="@+id/disconnect_item"
         android:title="断开蓝牙"/>
+    <item
+        android:id="@+id/clean_bond"
+        android:title="取消匹配"/>
 </menu>

@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -23,15 +24,18 @@ import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -74,6 +78,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         mRecyclerView.setLayoutManager(layoutManager);
     }
 
+    @SuppressLint("ObsoleteSdkInt")
     public void searchBluetooth() {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED){
@@ -89,7 +94,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         pd.show();
         pd.setCancelable(false);
     }
-
     private void stopDiscovery() {
         pd.dismiss();
         re_scan.setText("重新扫描");
@@ -130,6 +134,20 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                 connectHc06();
             } else if (itemId == R.id.disconnect_item) {
                 goAnim();
+            } else if (itemId == R.id.clean_bond){
+                goAnim();
+                new AlertDialog.Builder(this)
+                        .setTitle("取消配对")
+                        .setMessage("确定吗?")
+                        .setPositiveButton("取消", null)
+                        .setNegativeButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                unpairDevice(mDeviceList.get(item_locale));
+                                searchBluetooth();
+                            }
+                        })
+                        .show();
             }
             return false;
         });
@@ -138,6 +156,16 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     @SuppressLint("MissingPermission")
     public boolean isPaired(BluetoothDevice device) {
         return device.getBondState() == BluetoothDevice.BOND_BONDED;
+    }
+    //反射来调用BluetoothDevice.removeBond取消设备的配对
+    private void unpairDevice(BluetoothDevice device) {
+        try {
+            Method m = device.getClass()
+                    .getMethod("removeBond", (Class[]) null);
+            m.invoke(device, (Object[]) null);
+        } catch (Exception e) {
+            showLog("unpairDevice:"+e.getMessage());
+        }
     }
     /**
      * 连接设备

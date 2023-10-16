@@ -5,7 +5,7 @@
         android:title="蓝牙列表"/>
     <item
         android:id="@+id/bond_bt"
-        android:title="己配对蓝牙"/>
+        android:title="选项"/>
     <item
         android:id="@+id/about"
         android:title="关于"/>

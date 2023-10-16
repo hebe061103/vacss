@@ -34,9 +34,18 @@ public class BlueDeviceItemAdapter extends RecyclerView.Adapter<BlueDeviceItemAd
     @SuppressLint({"MissingPermission", "SetTextI18n"})
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
-        holder.tv.setText(mDeviceList.get(position).getName() + "  " + mDeviceList.get(position).getAddress());
+        if(!isPaired(mDeviceList.get(position))) {
+            String no_bond=mDeviceList.get(position).getName() + "\n" + mDeviceList.get(position).getAddress();
+            holder.tv.setText(no_bond);
+        }else {
+            String bonded=mDeviceList.get(position).getName() + "\n" + mDeviceList.get(position).getAddress() + "    --->(巳配对)";
+            holder.tv.setText(bonded);
+        }
     }
-
+    @SuppressLint("MissingPermission")
+    public boolean isPaired(BluetoothDevice device) {
+        return device.getBondState() == BluetoothDevice.BOND_BONDED;
+    }
     @Override
     public int getItemCount() {
         return mDeviceList == null ? 0 : mDeviceList.size();
