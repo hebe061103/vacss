@@ -1,5 +1,6 @@
 package com.zt.vacss;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -19,6 +20,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.text.TextUtils;
@@ -178,6 +180,13 @@ public class BleServerActivity extends AppCompatActivity implements EasyPermissi
         super.onResume();
     }
     private void startServer() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED){
+                requestPermissions(new String[]{
+                        Manifest.permission.BLUETOOTH_CONNECT
+                }, 550);
+            }
+        }
         //先判断有没有权限
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED
                 ||ActivityCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED
@@ -275,13 +284,19 @@ public class BleServerActivity extends AppCompatActivity implements EasyPermissi
     }
 
     private void requestBluetoothPermissions() {
-        int BLUE_PERMISSIONS_RECODE = 1;
+        int BLUE_PERMISSIONS_RECODE = 10;
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
+            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED){
+                requestPermissions(new String[]{
+                        Manifest.permission.BLUETOOTH_ADVERTISE
+                }, BLUE_PERMISSIONS_RECODE);
+            }
+        }
         requestPermissions(new String[]{
                 android.Manifest.permission.BLUETOOTH,
                 android.Manifest.permission.BLUETOOTH_ADMIN,
                 android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                android.Manifest.permission.ACCESS_FINE_LOCATION,
-                android.Manifest.permission.BLUETOOTH_ADVERTISE
+                android.Manifest.permission.ACCESS_FINE_LOCATION
         }, BLUE_PERMISSIONS_RECODE);
     }
 
@@ -298,8 +313,7 @@ public class BleServerActivity extends AppCompatActivity implements EasyPermissi
         }
     }
     private void showLog(String text){
-        String TAG = "BleServerActivity";
-        Log.d(TAG, "showLog: " + text);
+        Log.d("BleServerActivity:", "showLog: " + text);
     }
     private void showToast(String text) {
         Toast.makeText(this, text, Toast.LENGTH_SHORT).show();

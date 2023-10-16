@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.util.Log;
@@ -19,7 +20,6 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.PopupMenu;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -31,12 +31,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
@@ -48,9 +46,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     private Button re_scan;
     private ProgressDialog pd;
     private int item_locale;
-    private BluetoothSocket mSocket;
-    public static Consumer<String> str;
-
+    public static BluetoothSocket mSocket;
     public static boolean connect_ok;
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,8 +75,12 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     }
 
     public void searchBluetooth() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,new String[]{android.Manifest.permission.BLUETOOTH_SCAN},100);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED){
+                requestPermissions(new String[]{
+                        Manifest.permission.BLUETOOTH_SCAN
+                }, 100);
+            }
         }
         mBluetoothAdapter.startDiscovery();
         re_scan.setText("正在扫描");
@@ -127,13 +127,13 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                 if(!isPaired(mDeviceList.get(item_locale))){
                     mDeviceList.get(item_locale).createBond();
                 }
-                connBluetoothDevice(mDeviceList.get(item_locale));
+                connectHc06();
             } else if (itemId == R.id.disconnect_item) {
                 goAnim();
             }
             return false;
         });
-        popupMenu.show();//显示菜单，不要少了这一步
+        popupMenu.show();//显示菜单
     }
     @SuppressLint("MissingPermission")
     public boolean isPaired(BluetoothDevice device) {
@@ -142,28 +142,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     /**
      * 连接设备
      *
-     * @param device 设备信息
      */
-    public void connBluetoothDevice(BluetoothDevice device) {
-        new Thread() {
-            @SuppressLint("MissingPermission")
-            @Override
-            public void run() {
-                super.run();
-                try {
-                    mSocket = (BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[]{int.class}).invoke(device, 1);
-                    if (mSocket != null) {
-                        if (!mSocket.isConnected()) {
-                            mSocket.connect();
-                        }
-                    }
-                } catch (Exception e) {
-                    Log.e("BleClientActivity", "run:connectException:{}" + e.getMessage());
-                    mSocket = null;
-                }
-            }
-        }.start();
-    }
     @SuppressLint("MissingPermission")
     private void connectHc06() {
         BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(mDeviceList.get(item_locale).getAddress());
@@ -228,44 +207,10 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         registerReceiver(mBluetoothReceiver, filter);
     }
     /**
-     * 接收消息
-     *
-     * @param consumer 数据回调
-     */
-    public void receiverMsg(Consumer<String> consumer) {
-        if (mSocket == null) {
-            showLog("receiverMsg socket is null");
-            return;
-        }
-        new Thread() {
-            @Override
-            public void run() {
-                super.run();
-                while (true) {
-                    char [] buffer = new char[1024];
-                    try {
-                        InputStream is = mSocket.getInputStream();
-                        InputStreamReader inputStreamReader = new InputStreamReader(is, "GBK");
-                        int read = inputStreamReader.read(buffer);
-                        String readStr = new String(buffer, 0, read);
-                        showLog("receiverMsg:Msg ={};"+readStr);
-                        consumer.accept(readStr);
-//                        is.close();
-//                        bluetoothSocket.close();
-                    } catch (Exception e) {
-                        showLog("receiverMsgException: {}"+ e.getMessage());
-                    }
-                }
-
-            }
-        }.start();
-    }
-    /**
      * 发送消息
      *
-     * @param msg    数据
      */
-    public void sendMsg(String msg) {
+    public static void sendMsg(String message) {
         if (mSocket == null) {
             showLog("sendMsg socket is null");
             return;
@@ -275,18 +220,38 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
             public void run() {
                 super.run();
                 try {
-                    byte[] buffer = msg.getBytes();
                     OutputStream outputStream = mSocket.getOutputStream();
-                    outputStream.write(buffer);
-                    outputStream.flush();
-                    showLog("sendMsg msg = {}"+msg);
+                    outputStream.write(message.getBytes());
                 } catch (Exception e) {
-                    showLog("error: sendMsgException : {}" + e.getMessage());
+                    showLog("error:sendMsgException:{}" + e.getMessage());
                 }
             }
         }.start();
     }
+    /**
+     * 接收数据
+     */
+    public static void receiverData() {
+        if (mSocket == null) {
+            showLog("Receiver socket is null");
+            return;
+        }
+        new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                try {
+                    InputStream inputStream = mSocket.getInputStream();
+                    byte[] buffer = new byte[1024];
+                    int length = inputStream.read(buffer);
+                    String message = new String(buffer, 0, length);
 
+                } catch (Exception e) {
+                    showLog("error: ReceiverMsgException : {}" + e.getMessage());
+                }
+            }
+        }.start();
+    }
     /**
      * 重写方法将权限请求结果传递给EasyPermission
      */
@@ -315,13 +280,12 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         vibrator.vibrate(30);//振动0.5秒
         // 下边是可以使震动有规律的震动  -1：表示不重复 0：循环的震动
     }
-    private void showLog(String text){
-        Log.d("BleClientActivity", "showLog: " + text);
-    }
     private void showToast(String text) {
         Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
     }
-
+    private static void showLog(String text){
+        Log.d("BleClientActivity:", "showLog: " + text);
+    }
     protected void onDestroy() {
         unregisterReceiver(mBluetoothReceiver);
         super.onDestroy();
