@@ -163,6 +163,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                 mintent.putExtra("checkName",mDeviceList.get(item_locale).getName());
                 startActivities(new Intent[]{mintent});
                 Intent intent = new Intent(BleClientActivity.this,RefreshRssi.class);
+                intent.putExtra("pushToServer",mDeviceList.get(item_locale).getAddress());
                 startService(intent);
             }
             return false;
