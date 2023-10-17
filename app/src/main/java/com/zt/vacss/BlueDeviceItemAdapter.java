@@ -38,7 +38,7 @@ public class BlueDeviceItemAdapter extends RecyclerView.Adapter<BlueDeviceItemAd
             String no_bond=mDeviceList.get(position).getName() + "\n" + mDeviceList.get(position).getAddress();
             holder.tv.setText(no_bond);
         }else {
-            String bonded=mDeviceList.get(position).getName() + "\n" + mDeviceList.get(position).getAddress() + "    --->(巳配对)";
+            String bonded=mDeviceList.get(position).getName() + "\n" + mDeviceList.get(position).getAddress() + "  (巳配对)";
             holder.tv.setText(bonded);
         }
     }

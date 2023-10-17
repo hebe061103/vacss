@@ -9,7 +9,6 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -31,27 +30,33 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
 /** @noinspection deprecation*/
-public class BleClientActivity extends AppCompatActivity implements EasyPermissions.RationaleCallbacks{
+public class BleClientActivity extends AppCompatActivity implements EasyPermissions.RationaleCallbacks {
     private final List<BluetoothDevice> mDeviceList = new ArrayList<>();
     private static final BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
     private RecyclerView mRecyclerView;
+    public static BluetoothSocket mSocket;
     private Button re_scan;
     private ProgressDialog pd;
     private int item_locale;
-    public static BluetoothSocket mSocket;
     public static boolean connect_ok;
+    public static short rssi;
+    private BlueDeviceItemAdapter mRecycler;
+    public static BluetoothDevice btDevice;
+
+    @SuppressLint("MissingPermission")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bluetooth_scan);
@@ -66,8 +71,8 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
             BleClientActivity.this.searchBluetooth();
         });
         searchBluetooth();
-    }
 
+    }
     private void initList() {
         //设置固定大小
         mRecyclerView = findViewById(R.id.rv_device_list);
@@ -76,6 +81,9 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         layoutManager.setOrientation(RecyclerView.VERTICAL);
         mRecyclerView.setLayoutManager(layoutManager);
+        mRecycler = new BlueDeviceItemAdapter(mDeviceList, this);
+        mRecyclerView.addItemDecoration(new LinearSpacingItemDecoration(this, 10));//添加间距
+        mRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL)); //添加分隔线
     }
 
     @SuppressLint("ObsoleteSdkInt")
@@ -105,11 +113,9 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         if (!mDeviceList.contains(device)) {
             assert device != null;
             if (!(device.getName() == null)) {
+                rssi= Objects.requireNonNull(intent.getExtras()).getShort(BluetoothDevice.EXTRA_RSSI);
                 mDeviceList.add(device);
-                BlueDeviceItemAdapter mRecycler = new BlueDeviceItemAdapter(mDeviceList, this);
                 mRecyclerView.setAdapter(mRecycler);
-                mRecyclerView.addItemDecoration(new LinearSpacingItemDecoration(this, 10));//添加间距
-                mRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL)); //添加分隔线
                 mRecycler.setRecyclerItemLongClickListener(position -> {
                     goAnim();
                     item_locale = position;
@@ -118,6 +124,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
             }
         }
     }
+
     @SuppressLint("MissingPermission")
     private void showPopupMenu(final View view) {
         final PopupMenu popupMenu = new PopupMenu(this, view, Gravity.END);
@@ -134,20 +141,29 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                 connectHc06();
             } else if (itemId == R.id.disconnect_item) {
                 goAnim();
+                try {
+                    mSocket.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
             } else if (itemId == R.id.clean_bond){
                 goAnim();
                 new AlertDialog.Builder(this)
                         .setTitle("取消配对")
                         .setMessage("确定吗?")
                         .setPositiveButton("取消", null)
-                        .setNegativeButton("确定", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                unpairDevice(mDeviceList.get(item_locale));
-                                searchBluetooth();
-                            }
+                        .setNegativeButton("确定", (dialog, which) -> {
+                            unpairDevice(mDeviceList.get(item_locale));
+                            searchBluetooth();
                         })
                         .show();
+            }else if (itemId == R.id.add_check) {
+                goAnim();
+                Intent mintent = new Intent(BleClientActivity.this,OptionSetting.class);
+                mintent.putExtra("checkName",mDeviceList.get(item_locale).getName());
+                startActivities(new Intent[]{mintent});
+                Intent intent = new Intent(BleClientActivity.this,RefreshRssi.class);
+                startService(intent);
             }
             return false;
         });
@@ -218,6 +234,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                         break;
                     case BluetoothDevice.ACTION_ACL_DISCONNECTED:
                         showToast("连接失败");
+                        connect_ok=false;
                         break;
                 }
             }
@@ -305,7 +322,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     protected void goAnim(){
         // 震动效果的系统服务
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-        vibrator.vibrate(30);//振动0.5秒
+        vibrator.vibrate(20);//振动0.5秒
         // 下边是可以使震动有规律的震动  -1：表示不重复 0：循环的震动
     }
     private void showToast(String text) {

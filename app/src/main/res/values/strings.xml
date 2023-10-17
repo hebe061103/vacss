@@ -13,4 +13,5 @@
     <string name="dataReceiver">数据接收:</string>
     <string name="dataSent">数据发送:</string>
     <string name="click_sent">点击发送</string>
+    <string name="add_check_awalys">开启持续检测的设备:</string>
 </resources>

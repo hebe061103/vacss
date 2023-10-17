@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <uses-permission android:name="android.permission.VIBRATE"/>
-    <!--android 6-11-->
-    <uses-permission android:name="android.permission.BLUETOOTH"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <!--android 12-->
-    <!--蓝牙连接-->
+
+    <uses-permission android:name="android.permission.VIBRATE" /> <!-- android 6-11 -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <!-- android 12 -->
+    <!-- 蓝牙连接 -->
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
-    <!--蓝牙扫描-->
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" /> <!-- 蓝牙扫描 -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
         android:usesPermissionFlags="neverForLocation"
         tools:ignore="UnusedAttribute" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -25,20 +25,26 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Vacss"
         tools:ignore="UnusedAttribute">
+        <service
+            android:name=".RefreshRssi"
+            android:enabled="true"
+            android:exported="false">
+
+        </service>
         <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.zt.vacss.BleClientActivity"/>
-        <activity android:name="com.zt.vacss.bond_bt"/>
-        <activity android:name="com.zt.vacss.about" />
-        <activity android:name="com.zt.vacss.Engineeringmode" />
-        <activity android:name="com.zt.vacss.BleServerActivity"/>
-
+        <activity android:name=".BleClientActivity" />
+        <activity android:name=".OptionSetting" />
+        <activity android:name=".about" />
+        <activity android:name=".Engineeringmode" />
+        <activity android:name=".BleServerActivity" />
     </application>
 
 </manifest>

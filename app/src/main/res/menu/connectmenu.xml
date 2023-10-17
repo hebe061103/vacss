@@ -10,4 +10,7 @@
     <item
         android:id="@+id/clean_bond"
         android:title="取消匹配"/>
+    <item
+        android:id="@+id/add_check"
+        android:title="添加检测"/>
 </menu>

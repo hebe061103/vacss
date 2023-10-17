@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.R
                 startActivities(new Intent[]{intent});
             }else if (itemId == R.id.bond_bt) {
                 goAnim();
-                Intent intent = new Intent(MainActivity.this, bond_bt.class);
+                Intent intent = new Intent(MainActivity.this, OptionSetting.class);
                 startActivities(new Intent[]{intent});
             } else if (itemId == R.id.about) {
                 goAnim();
@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.R
     protected void goAnim(){
         // 震动效果的系统服务
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-        vibrator.vibrate(30);//振动0.5秒
+        vibrator.vibrate(20);//振动0.5秒
         // 下边是可以使震动有规律的震动  -1：表示不重复 0：循环的震动
     }
     private void showToast(String text) {
