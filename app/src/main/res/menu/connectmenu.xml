@@ -12,5 +12,8 @@
         android:title="取消匹配"/>
     <item
         android:id="@+id/add_check"
-        android:title="添加检测"/>
+        android:title="添加持续检测"/>
+    <item
+        android:id="@+id/cannel_check"
+        android:title="取消持续检测"/>
 </menu>

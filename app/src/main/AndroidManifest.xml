@@ -28,20 +28,19 @@
         <service
             android:name=".RefreshRssi"
             android:enabled="true"
-            android:exported="false">
-
+            android:exported="false"
+            android:persistent="true"
+            android:process=":remote">
         </service>
         <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity android:name=".BleClientActivity" />
-        <activity android:name=".OptionSetting" />
         <activity android:name=".about" />
         <activity android:name=".Engineeringmode" />
         <activity android:name=".BleServerActivity" />

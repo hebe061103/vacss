@@ -2,11 +2,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/scan_bt"
-        android:title="蓝牙列表"/>
-    <item
-        android:id="@+id/bond_bt"
-        android:title="选项"/>
+        android:title="@string/blue_list"/>
     <item
         android:id="@+id/about"
-        android:title="关于"/>
+        android:title="@string/about_about"/>
 </menu>

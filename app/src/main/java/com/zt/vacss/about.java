@@ -6,14 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 
 public class about extends AppCompatActivity {
-    private static TextView about_tx;
+    private TextView about_tx;
     private static int i;
     @SuppressLint("SetTextI18n")
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +23,7 @@ public class about extends AppCompatActivity {
         mBlueMessage.setText(getBluetoothMAC(this));
         clickEvent();
     }
+    @SuppressLint("HardwareIds")
     @SuppressWarnings("MissingPermission")
     public static String getBluetoothMAC(Context context) {
         String info = null;
@@ -38,15 +38,12 @@ public class about extends AppCompatActivity {
         return info ;
     }
 private void clickEvent() {
-        about_tx.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                i++;
-                if(i==6){
-                    i=0;
-                    Intent intent = new Intent(about.this,Engineeringmode.class);
-                    startActivities(new Intent[]{intent});
-                }
+        about_tx.setOnClickListener(view -> {
+            i++;
+            if(i==6){
+                i=0;
+                Intent intent = new Intent(about.this,Engineeringmode.class);
+                startActivities(new Intent[]{intent});
             }
         });
 }
