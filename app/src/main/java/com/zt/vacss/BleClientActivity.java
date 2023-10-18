@@ -54,7 +54,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     public static boolean connect_ok;
     public static short rssi;
     private BlueDeviceItemAdapter mRecycler;
-    public static BluetoothDevice btDevice;
 
     @SuppressLint("MissingPermission")
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,9 +89,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     public void searchBluetooth() {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED){
-                requestPermissions(new String[]{
-                        Manifest.permission.BLUETOOTH_SCAN
-                }, 100);
+                ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.BLUETOOTH_SCAN},100);
             }
         }
         mBluetoothAdapter.startDiscovery();
@@ -159,12 +156,12 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                         .show();
             }else if (itemId == R.id.add_check) {
                 goAnim();
-                Intent mintent = new Intent(BleClientActivity.this,OptionSetting.class);
-                mintent.putExtra("checkName",mDeviceList.get(item_locale).getName());
-                startActivities(new Intent[]{mintent});
                 Intent intent = new Intent(BleClientActivity.this,RefreshRssi.class);
-                intent.putExtra("pushToServer",mDeviceList.get(item_locale).getAddress());
                 startService(intent);
+            }else if(itemId == R.id.cannel_check){
+                goAnim();
+                Intent intent = new Intent(BleClientActivity.this,RefreshRssi.class);
+                stopService(intent);
             }
             return false;
         });
@@ -174,7 +171,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     public boolean isPaired(BluetoothDevice device) {
         return device.getBondState() == BluetoothDevice.BOND_BONDED;
     }
-    //反射来调用BluetoothDevice.removeBond取消设备的配对
+    /** @noinspection JavaReflectionMemberAccess*/ //反射来调用BluetoothDevice.removeBond取消设备的配对
     private void unpairDevice(BluetoothDevice device) {
         try {
             Method m = device.getClass()

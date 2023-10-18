@@ -16,4 +16,6 @@
     <string name="add_check_awalys">保持信号检测的设备:</string>
     <string name="cancel_keep">取消</string>
     <string name="keep_check_device">保持检测的设备</string>
+    <string name="about_about">关于</string>
+    <string name="blue_list">蓝牙列表</string>
 </resources>

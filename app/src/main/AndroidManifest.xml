@@ -28,8 +28,8 @@
         <service
             android:name=".RefreshRssi"
             android:enabled="true"
-            android:exported="false">
-
+            android:exported="false"
+            android:process=":remote">
         </service>
         <activity
             android:name=".MainActivity"
@@ -41,7 +41,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".BleClientActivity" />
-        <activity android:name=".OptionSetting" />
         <activity android:name=".about" />
         <activity android:name=".Engineeringmode" />
         <activity android:name=".BleServerActivity" />
