@@ -114,9 +114,9 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                 mDeviceList.add(device);
                 mRecyclerView.setAdapter(mRecycler);
                 mRecycler.setRecyclerItemLongClickListener(position -> {
-                    goAnim();
+                    BleClientActivity.this.goAnim();
                     item_locale = position;
-                    showPopupMenu(mRecyclerView.getChildAt(position));
+                    BleClientActivity.this.showPopupMenu(mRecyclerView.getChildAt(position));
                 });
             }
         }
@@ -151,17 +151,10 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                         .setPositiveButton("取消", null)
                         .setNegativeButton("确定", (dialog, which) -> {
                             unpairDevice(mDeviceList.get(item_locale));
+                            mDeviceList.clear();
                             searchBluetooth();
                         })
                         .show();
-            }else if (itemId == R.id.add_check) {
-                goAnim();
-                Intent intent = new Intent(BleClientActivity.this,RefreshRssi.class);
-                startService(intent);
-            }else if(itemId == R.id.cannel_check){
-                goAnim();
-                Intent intent = new Intent(BleClientActivity.this,RefreshRssi.class);
-                stopService(intent);
             }
             return false;
         });

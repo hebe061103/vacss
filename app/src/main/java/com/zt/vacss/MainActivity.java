@@ -5,18 +5,15 @@ import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -27,39 +24,19 @@ import pub.devrel.easypermissions.EasyPermissions;
 /** @noinspection deprecation*/
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks{
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-    TextView serverStatus_remind;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         startEnableBluetooth();
         initClickListen();
-        serverStatusDisplay();
     }
 
     private void initClickListen() {
-        serverStatus_remind = findViewById(R.id.server_status_flag);
         ImageView menu_bt = findViewById(R.id.menu_img);
         menu_bt.setOnClickListener(view -> {
             goAnim();
             MainActivity.this.showPopupMenu(menu_bt);
-        });
-        serverStatus_remind.setOnLongClickListener(view -> {
-            goAnim();
-            if (!serverStatus_remind.getText().toString().equals("服务停止")) {
-                new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("取消持续信号检测吗?")
-                        .setMessage("确定吗?")
-                        .setPositiveButton("取消", null)
-                        .setNegativeButton("确定", (dialog, which) -> {
-                            Intent intent = new Intent(MainActivity.this, RefreshRssi.class);
-                            stopService(intent);
-                        })
-                        .show();
-            } else {
-                Toast.makeText(MainActivity.this, "服务没有运行", Toast.LENGTH_SHORT).show();
-            }
-            return true;
         });
     }
 
@@ -113,18 +90,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             startActivityForResult(intent, 200);
         }
     }
-    private void serverStatusDisplay(){
-        if(RefreshRssi.serverFlag){
-            serverStatus_remind.setTextColor(Color.parseColor("#33cc00"));
-            serverStatus_remind.setText("服务运行中");
-        }else {
-            serverStatus_remind.setTextColor(Color.parseColor("#cccccc"));
-            serverStatus_remind.setText("服务停止");
-        }
-    }
     protected void onResume() {
         startEnableBluetooth();
-        serverStatusDisplay();
         super.onResume();
     }
     protected void goAnim(){
