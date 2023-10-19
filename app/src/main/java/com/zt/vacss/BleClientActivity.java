@@ -11,6 +11,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -54,7 +55,12 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     public static boolean connect_ok;
     public static short rssi;
     private BlueDeviceItemAdapter mRecycler;
-
+    private void writeDate(String device){
+        SharedPreferences sp = getSharedPreferences("data",MODE_PRIVATE);//获取 SharedPreferences对象
+        SharedPreferences.Editor editor = sp.edit(); // 获取编辑器对象
+        editor.putString("deviceName",device ); // 存入String类型数据
+        editor.apply();// 提交数据
+    }
     @SuppressLint("MissingPermission")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,7 +76,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
             BleClientActivity.this.searchBluetooth();
         });
         searchBluetooth();
-
     }
     private void initList() {
         //设置固定大小
@@ -155,6 +160,9 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                             searchBluetooth();
                         })
                         .show();
+            }else if (itemId == R.id.add_rssi_check) {
+                goAnim();
+                writeDate(mDeviceList.get(item_locale).getAddress());
             }
             return false;
         });

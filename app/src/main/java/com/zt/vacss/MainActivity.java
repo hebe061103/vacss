@@ -2,42 +2,83 @@ package com.zt.vacss;
 
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.ClipDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import java.util.List;
+import java.util.Objects;
 
 import pub.devrel.easypermissions.EasyPermissions;
-
 /** @noinspection deprecation*/
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks{
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    private ClipDrawable clipBackground;
+    private ImageView mImageView;
+    private TextView rssi_value;
+    private Boolean exit;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         startEnableBluetooth();
-        initClickListen();
+        init();
     }
-
-    private void initClickListen() {
+    private void clip() {
+        //level在0-10000之间，0表示完全裁剪，10000表示完全不裁剪。设置的值越大，裁剪的范围就越小。
+        clipBackground.setLevel(10000);
+    }
+    private void init() {
+        mImageView = findViewById(R.id.iv);
+        clipBackground = (ClipDrawable) mImageView.getDrawable();
+        //设置过滤器，过滤因远程蓝牙设备被找到而发送的广播 BluetoothDevice.ACTION_FOUND
+        IntentFilter iFilter=new IntentFilter();
+        iFilter.addAction(BluetoothDevice.ACTION_FOUND);
+        //设置广播接收器和安装过滤器
+        registerReceiver(new foundReceiver(), iFilter);
         ImageView menu_bt = findViewById(R.id.menu_img);
+        rssi_value = findViewById(R.id.display_value);
         menu_bt.setOnClickListener(view -> {
             goAnim();
             MainActivity.this.showPopupMenu(menu_bt);
         });
+        rssi_value.setOnLongClickListener(view -> {
+            if (!(readDate() == null)) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("取消信号检测吗?")
+                        .setMessage("确定吗?")
+                        .setPositiveButton("取消", null)
+                        .setNegativeButton("确定", (dialog, which) -> {
+                            deleteData("deviceName");
+                            rssi_value.setText("❀");
+                            exit = true;
+                        })
+                        .show();
+            }
+            return true;
+        });
+        clip();
     }
 
     private void showPopupMenu(final View view) {
@@ -49,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             int itemId = item.getItemId();
             if (itemId == R.id.scan_bt) {
                 goAnim();
+                exit=true;
                 Intent intent = new Intent(MainActivity.this, BleClientActivity.class);
                 startActivities(new Intent[]{intent});
             } else if (itemId == R.id.about) {
@@ -90,9 +132,62 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             startActivityForResult(intent, 200);
         }
     }
+    /**
+     * 内部类：当找到一个远程蓝牙设备时执行的广播接收者
+     * @author Administrator
+     *
+     */
+    class foundReceiver extends BroadcastReceiver {
+        @SuppressLint({"MissingPermission", "SetTextI18n"})
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // TODO Auto-generated method stub
+            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);//获取此时找到的远程设备对象
+            assert device != null;
+            if (readDate().equals(device.getAddress())) {//判断远程设备是否与用户目标设备相同
+                short rssi = Objects.requireNonNull(intent.getExtras()).getShort(BluetoothDevice.EXTRA_RSSI);//获取额外rssi值
+                rssi_value.setText(device.getName() + "\n"+"信号值:" + rssi);//显示rssi到控件上
+                mBluetoothAdapter.cancelDiscovery();//关闭搜索
+            } else {
+                rssi_value.setText("❀");
+            }
+        }
+    }
+    private String readDate(){
+        SharedPreferences sp = getSharedPreferences("data",MODE_PRIVATE);
+        return sp.getString("deviceName","");
+    }
+    private void deleteData(String name){
+        SharedPreferences sp = getSharedPreferences("data",MODE_PRIVATE);//获取 SharedPreferences对象
+        SharedPreferences.Editor editor = sp.edit(); // 获取编辑器对象
+        editor.remove(name); // 根据key删除数据
+        editor.apply();
+    }
+    private void scanRssiValue(){
+        new Thread(){
+            /** @noinspection InfiniteLoopStatement*/
+            @SuppressLint("MissingPermission")
+            @Override
+            public void run() {
+                    while (!exit) {
+                        mBluetoothAdapter.startDiscovery();
+                        try {
+                            Thread.sleep(5000);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+        }.start();
+    }
     protected void onResume() {
         startEnableBluetooth();
+        if(!(readDate()==null)){exit=false; scanRssiValue();}
+        readDate();
         super.onResume();
+    }
+    protected void onDestroy() {
+        super.onDestroy();
     }
     protected void goAnim(){
         // 震动效果的系统服务
