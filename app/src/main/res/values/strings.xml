@@ -17,4 +17,10 @@
     <string name="blue_list">蓝牙列表</string>
     <string name="tixin2">* 长按设备选择功能</string>
     <string name="display_rssi_value">显示信号值</string>
+    <string name="电池电压">电池电压:</string>
+    <string name="电容电压">电容电压:</string>
+    <string name="电池伏特">电池伏特</string>
+    <string name="电容伏特">电容伏特</string>
+    <string name="电容充电">电容充电</string>
+    <string name="电池充电">电池充电</string>
 </resources>

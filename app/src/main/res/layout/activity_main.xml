@@ -10,9 +10,9 @@
         android:id="@+id/menu_img"
         android:layout_width="44dp"
         android:layout_height="45dp"
-        android:layout_marginStart="4dp"
-        android:layout_marginTop="4dp"
         android:contentDescription="@string/menu"
+        app:layout_constraintEnd_toStartOf="@+id/display_value"
+        app:layout_constraintHorizontal_bias="0.004"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@android:drawable/ic_menu_sort_by_size"
@@ -22,18 +22,19 @@
         android:id="@+id/display_value"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
         android:layout_marginEnd="16dp"
         android:text="@string/display_rssi_value"
         android:textSize="15sp"
+        app:layout_constraintBottom_toTopOf="@+id/iv"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.269" />
 
     <ImageView
         android:id="@+id/iv"
         android:layout_width="255dp"
         android:layout_height="123dp"
-        android:layout_marginTop="64dp"
+        android:layout_marginTop="48dp"
         android:contentDescription="充电动画"
         android:src="@drawable/clip"
         app:layout_constraintEnd_toEndOf="parent"
@@ -41,5 +42,78 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:ignore="HardcodedText,ImageContrastCheck" />
+
+    <TextView
+        android:id="@+id/battery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="28dp"
+        android:layout_marginTop="60dp"
+        android:text="@string/电池电压"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/iv" />
+
+    <TextView
+        android:id="@+id/capacitance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="28dp"
+        android:layout_marginTop="60dp"
+        android:text="@string/电容电压"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/battery" />
+
+    <TextView
+        android:id="@+id/battery_voltage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="60dp"
+        android:text="@string/电池伏特"
+        android:textSize="18sp"
+        app:layout_constraintStart_toEndOf="@+id/battery"
+        app:layout_constraintTop_toBottomOf="@+id/iv" />
+
+    <TextView
+        android:id="@+id/capacitance_voltage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="60dp"
+        android:text="@string/电容伏特"
+        android:textSize="18sp"
+        app:layout_constraintStart_toEndOf="@+id/capacitance"
+        app:layout_constraintTop_toBottomOf="@+id/battery_voltage" />
+
+    <Button
+        android:id="@+id/battery_charge"
+        android:layout_width="100dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="88dp"
+        android:layout_marginTop="48dp"
+        android:text="@string/电池充电"
+        android:textSize="12sp"
+        app:layout_constraintStart_toEndOf="@+id/battery_voltage"
+        app:layout_constraintTop_toBottomOf="@+id/iv" />
+
+    <Button
+        android:id="@+id/capacitance_charge"
+        android:layout_width="100dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="88dp"
+        android:layout_marginTop="36dp"
+        android:text="@string/电容充电"
+        android:textSize="12sp"
+        app:layout_constraintStart_toEndOf="@+id/capacitance_voltage"
+        app:layout_constraintTop_toBottomOf="@+id/battery_charge" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline22"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_begin="380dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -14,6 +14,8 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.ClipDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.Vibrator;
 import android.view.View;
 import android.widget.ImageView;
@@ -28,6 +30,8 @@ import androidx.core.app.ActivityCompat;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import pub.devrel.easypermissions.EasyPermissions;
 /** @noinspection deprecation*/
@@ -44,10 +48,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         setContentView(R.layout.activity_main);
         startEnableBluetooth();
         init();
-    }
-    private void clip() {
-        //level在0-10000之间，0表示完全裁剪，10000表示完全不裁剪。设置的值越大，裁剪的范围就越小。
-        clipBackground.setLevel(10000);
     }
     private void init() {
         mImageView = findViewById(R.id.iv);
@@ -78,7 +78,26 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             }
             return true;
         });
-        clip();
+        final Handler handler = new Handler(msg -> {
+            if(msg.what == 0x123456){
+                clipBackground.setLevel(clipBackground.getLevel()+800);
+            }
+            return true;
+        });
+        //定时器，第一次启动的时间是0，每隔300ms执行一次，当clipDrawable.getLevel()大于10000的时候，取消定时器
+        final Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Message msg = new Message();
+                msg.what = 0x123456;
+                handler.sendMessage(msg);
+                if(clipBackground.getLevel()>10000){
+                    //timer.cancel();
+                    clipBackground.setLevel(0);
+                }
+            }
+        },0,100);
     }
 
     private void showPopupMenu(final View view) {
@@ -114,6 +133,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 requestPermissions(new String[]{
                         Manifest.permission.BLUETOOTH_CONNECT
                 }, 200);
+            }
+        }
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED){
+                ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.BLUETOOTH_SCAN},100);
             }
         }
         if ((ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED)
