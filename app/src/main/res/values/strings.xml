@@ -22,5 +22,6 @@
     <string name="电池伏特">电池伏特</string>
     <string name="电容伏特">电容伏特</string>
     <string name="电容充电">电容充电</string>
-    <string name="电池充电">电池充电</string>
+    <string name="蓝牙连接状态">蓝牙连接状态:</string>
+    <string name="连接状态">连接状态</string>
 </resources>

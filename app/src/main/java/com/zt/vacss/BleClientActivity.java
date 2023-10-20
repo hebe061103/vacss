@@ -55,16 +55,13 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     public static boolean connect_ok;
     public static short rssi;
     private BlueDeviceItemAdapter mRecycler;
-    private void writeDate(String device){
-        SharedPreferences sp = getSharedPreferences("data",MODE_PRIVATE);//获取 SharedPreferences对象
-        SharedPreferences.Editor editor = sp.edit(); // 获取编辑器对象
-        editor.putString("deviceName",device ); // 存入String类型数据
-        editor.apply();// 提交数据
-    }
+    private SharedPreferences.Editor editor;
     @SuppressLint("MissingPermission")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bluetooth_scan);
+        SharedPreferences sp = getSharedPreferences("data", MODE_PRIVATE);//获取 SharedPreferences对象
+        editor = sp.edit(); // 获取编辑器对象
         registerBluetoothListener();
         initList();
         re_scan = findViewById(R.id.re_scan);
@@ -162,7 +159,8 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                         .show();
             }else if (itemId == R.id.add_rssi_check) {
                 goAnim();
-                writeDate(mDeviceList.get(item_locale).getAddress());
+                editor.putString("deviceName",mDeviceList.get(item_locale).getAddress() );
+                editor.apply();
             }
             return false;
         });
@@ -215,6 +213,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     }
 
     private final BroadcastReceiver mBluetoothReceiver = new BroadcastReceiver() {
+        @SuppressLint("MissingPermission")
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -229,10 +228,14 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                         break;
                     case BluetoothDevice.ACTION_ACL_CONNECTED:
                         showToast("连接成功");
+                        editor.putString("online",mDeviceList.get(item_locale).getName());
+                        editor.apply();
                         connect_ok=true;
                         break;
                     case BluetoothDevice.ACTION_ACL_DISCONNECTED:
                         showToast("连接失败");
+                        editor.remove("online");
+                        editor.apply();
                         connect_ok=false;
                         break;
                 }
@@ -321,7 +324,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     protected void goAnim(){
         // 震动效果的系统服务
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-        vibrator.vibrate(20);//振动0.5秒
+        vibrator.vibrate(15);//振动0.5秒
         // 下边是可以使震动有规律的震动  -1：表示不重复 0：循环的震动
     }
     private void showToast(String text) {

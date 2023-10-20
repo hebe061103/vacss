@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.graphics.drawable.ClipDrawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -38,19 +39,18 @@ import pub.devrel.easypermissions.EasyPermissions;
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks{
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     private ClipDrawable clipBackground;
-    private ImageView mImageView;
-    private TextView rssi_value;
+    private TextView rssi_value ,bl_data;
     private Boolean exit;
+    long lastBack = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        startEnableBluetooth();
         init();
     }
     private void init() {
-        mImageView = findViewById(R.id.iv);
+        ImageView mImageView = findViewById(R.id.iv);
         clipBackground = (ClipDrawable) mImageView.getDrawable();
         //设置过滤器，过滤因远程蓝牙设备被找到而发送的广播 BluetoothDevice.ACTION_FOUND
         IntentFilter iFilter=new IntentFilter();
@@ -58,13 +58,14 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         //设置广播接收器和安装过滤器
         registerReceiver(new foundReceiver(), iFilter);
         ImageView menu_bt = findViewById(R.id.menu_img);
+        bl_data = findViewById(R.id.bl_connect_status);
         rssi_value = findViewById(R.id.display_value);
         menu_bt.setOnClickListener(view -> {
             goAnim();
             MainActivity.this.showPopupMenu(menu_bt);
         });
         rssi_value.setOnLongClickListener(view -> {
-            if (!(readDate() == null)) {
+            if (!(readDate("deviceName") == null)) {
                 new AlertDialog.Builder(MainActivity.this)
                         .setTitle("取消信号检测吗?")
                         .setMessage("确定吗?")
@@ -78,6 +79,38 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             }
             return true;
         });
+        clipFullDisplay();
+    }
+    @SuppressLint("MissingPermission")
+    private void showPopupMenu(final View view) {
+        final PopupMenu popupMenu = new PopupMenu(this, view);
+        //menu 布局
+        popupMenu.getMenuInflater().inflate(R.menu.main, popupMenu.getMenu());
+        //点击事件
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.scan_bt) {
+                goAnim();
+                exit=true;
+                mBluetoothAdapter.cancelDiscovery();
+                Intent intent = new Intent(MainActivity.this, BleClientActivity.class);
+                startActivities(new Intent[]{intent});
+            } else if (itemId == R.id.about) {
+                goAnim();
+                exit=true;
+                mBluetoothAdapter.cancelDiscovery();
+                Intent intent = new Intent(MainActivity.this, about.class);
+                startActivities(new Intent[]{intent});
+            }
+            return false;
+        });
+        //显示菜单，不要少了这一步
+        popupMenu.show();
+    }
+    private void clipFullDisplay(){
+        clipBackground.setLevel(10000);
+    }
+    private void refreshDraw(){
         final Handler handler = new Handler(msg -> {
             if(msg.what == 0x123456){
                 clipBackground.setLevel(clipBackground.getLevel()+800);
@@ -99,30 +132,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             }
         },0,100);
     }
-
-    private void showPopupMenu(final View view) {
-        final PopupMenu popupMenu = new PopupMenu(this, view);
-        //menu 布局
-        popupMenu.getMenuInflater().inflate(R.menu.main, popupMenu.getMenu());
-        //点击事件
-        popupMenu.setOnMenuItemClickListener(item -> {
-            int itemId = item.getItemId();
-            if (itemId == R.id.scan_bt) {
-                goAnim();
-                exit=true;
-                Intent intent = new Intent(MainActivity.this, BleClientActivity.class);
-                startActivities(new Intent[]{intent});
-            } else if (itemId == R.id.about) {
-                goAnim();
-                Intent intent = new Intent(MainActivity.this, about.class);
-                startActivities(new Intent[]{intent});
-            }
-            return false;
-        });
-        //显示菜单，不要少了这一步
-        popupMenu.show();
-    }
-
     private void startEnableBluetooth() {
         if (mBluetoothAdapter == null) {
             showToast("本设备没有蓝牙功能");
@@ -168,7 +177,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             // TODO Auto-generated method stub
             BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);//获取此时找到的远程设备对象
             assert device != null;
-            if (readDate().equals(device.getAddress())) {//判断远程设备是否与用户目标设备相同
+            if (readDate("deviceName")!=null && readDate("deviceName").equals(device.getAddress())) {//判断远程设备是否与用户目标设备相同
                 short rssi = Objects.requireNonNull(intent.getExtras()).getShort(BluetoothDevice.EXTRA_RSSI);//获取额外rssi值
                 rssi_value.setText(device.getName() + "\n"+"信号值:" + rssi);//显示rssi到控件上
                 mBluetoothAdapter.cancelDiscovery();//关闭搜索
@@ -177,37 +186,48 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             }
         }
     }
-    private String readDate(){
+    private String readDate(String key){
         SharedPreferences sp = getSharedPreferences("data",MODE_PRIVATE);
-        return sp.getString("deviceName","");
+        return sp.getString(key,null);
     }
-    private void deleteData(String name){
+    private void deleteData(String key){
         SharedPreferences sp = getSharedPreferences("data",MODE_PRIVATE);//获取 SharedPreferences对象
         SharedPreferences.Editor editor = sp.edit(); // 获取编辑器对象
-        editor.remove(name); // 根据key删除数据
+        editor.remove(key); // 根据key删除数据
         editor.apply();
     }
     private void scanRssiValue(){
-        new Thread(){
-            /** @noinspection InfiniteLoopStatement*/
+        new Thread(new Runnable() {
             @SuppressLint("MissingPermission")
             @Override
             public void run() {
-                    while (!exit) {
-                        mBluetoothAdapter.startDiscovery();
-                        try {
-                            Thread.sleep(5000);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
+                while (!exit) {
+                    mBluetoothAdapter.startDiscovery();
+                    sleepMS(5000);
                 }
-        }.start();
+            }
+        }).start();
+    }
+    private void bl_Status(){
+        if(!(readDate("online") == null)){
+            bl_data.setTextColor(Color.parseColor("#66FF33"));
+            bl_data.setText(readDate("online"));
+        }else {
+            bl_data.setTextColor(Color.parseColor("#CCCCCC"));
+            bl_data.setText("未连接");
+        }
+    }
+    private void sleepMS(int i){
+        try {
+            Thread.sleep(i);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
     protected void onResume() {
         startEnableBluetooth();
-        if(!(readDate()==null)){exit=false; scanRssiValue();}
-        readDate();
+        if(!(readDate("deviceName") == null)){exit=false; scanRssiValue();}
+        bl_Status();
         super.onResume();
     }
     protected void onDestroy() {
@@ -216,11 +236,23 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     protected void goAnim(){
         // 震动效果的系统服务
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-        vibrator.vibrate(20);//振动0.5秒
+        vibrator.vibrate(15);//振动0.5秒
         // 下边是可以使震动有规律的震动  -1：表示不重复 0：循环的震动
     }
     private void showToast(String text) {
         Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
+    }
+    /**
+     * 再次返回键退出程序
+     */
+    @Override
+    public void onBackPressed() {
+        if (lastBack == 0 || System.currentTimeMillis() - lastBack > 2000) {
+            Toast.makeText(MainActivity.this, "再按一次返回退出", Toast.LENGTH_SHORT).show();
+            lastBack = System.currentTimeMillis();
+            return;
+        }
+        super.onBackPressed();
     }
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
