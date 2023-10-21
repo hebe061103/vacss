@@ -10,18 +10,17 @@
     <string name="hc06">HC06串口调试</string>
     <string name="start_service">启动服务</string>
     <string name="tixin">* 请选择需要配对的HC06蓝牙模块</string>
+    <string name="tixin2">* 长按设备选择功能</string>
     <string name="dataReceiver">数据接收:</string>
     <string name="dataSent">数据发送:</string>
     <string name="click_sent">点击发送</string>
     <string name="about_about">关于</string>
     <string name="blue_list">蓝牙列表</string>
-    <string name="tixin2">* 长按设备选择功能</string>
     <string name="display_rssi_value">显示信号值</string>
     <string name="电池电压">电池电压:</string>
     <string name="电容电压">电容电压:</string>
     <string name="电池伏特">电池伏特</string>
     <string name="电容伏特">电容伏特</string>
-    <string name="电容充电">电容充电</string>
-    <string name="蓝牙连接状态">蓝牙连接状态:</string>
+    <string name="电容充电">给电容充电</string>
     <string name="连接状态">连接状态</string>
 </resources>

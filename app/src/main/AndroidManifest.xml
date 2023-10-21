@@ -25,10 +25,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Vacss"
         tools:ignore="UnusedAttribute">
-        <meta-data
-            android:name="com.google.android.actions"
-            android:resource="@drawable/battery_png"
-            tools:ignore="Deprecated" />
         <activity
             android:name=".MainActivity"
             android:exported="true">

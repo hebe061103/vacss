@@ -12,11 +12,8 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.drawable.ClipDrawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.os.Vibrator;
 import android.view.View;
 import android.widget.ImageView;
@@ -31,14 +28,11 @@ import androidx.core.app.ActivityCompat;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import pub.devrel.easypermissions.EasyPermissions;
 /** @noinspection deprecation*/
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks{
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-    private ClipDrawable clipBackground;
     private TextView rssi_value ,bl_data;
     private Boolean exit;
     long lastBack = 0;
@@ -50,8 +44,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         init();
     }
     private void init() {
-        ImageView mImageView = findViewById(R.id.iv);
-        clipBackground = (ClipDrawable) mImageView.getDrawable();
+        CircularProgressView progress_bar = (CircularProgressView) findViewById(R.id.progress_bar);
+        CircularProgressView progress_bar2 = (CircularProgressView) findViewById(R.id.progress_bar2);
         //设置过滤器，过滤因远程蓝牙设备被找到而发送的广播 BluetoothDevice.ACTION_FOUND
         IntentFilter iFilter=new IntentFilter();
         iFilter.addAction(BluetoothDevice.ACTION_FOUND);
@@ -79,8 +73,12 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             }
             return true;
         });
-        clipFullDisplay();
+        progress_bar.setProgress(50);
+        progress_bar.setText(50+"%");
+        progress_bar2.setProgress(20);
+        progress_bar2.setText(20+"%");
     }
+
     @SuppressLint("MissingPermission")
     private void showPopupMenu(final View view) {
         final PopupMenu popupMenu = new PopupMenu(this, view);
@@ -106,31 +104,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         });
         //显示菜单，不要少了这一步
         popupMenu.show();
-    }
-    private void clipFullDisplay(){
-        clipBackground.setLevel(10000);
-    }
-    private void refreshDraw(){
-        final Handler handler = new Handler(msg -> {
-            if(msg.what == 0x123456){
-                clipBackground.setLevel(clipBackground.getLevel()+800);
-            }
-            return true;
-        });
-        //定时器，第一次启动的时间是0，每隔300ms执行一次，当clipDrawable.getLevel()大于10000的时候，取消定时器
-        final Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                Message msg = new Message();
-                msg.what = 0x123456;
-                handler.sendMessage(msg);
-                if(clipBackground.getLevel()>10000){
-                    //timer.cancel();
-                    clipBackground.setLevel(0);
-                }
-            }
-        },0,100);
     }
     private void startEnableBluetooth() {
         if (mBluetoothAdapter == null) {

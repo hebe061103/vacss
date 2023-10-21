@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<clip xmlns:android="http://schemas.android.com/apk/res/android"
-    android:drawable="@drawable/battery_png"
-    android:clipOrientation="horizontal"
-    android:gravity="right">
-
-    <!--clipOrientation:有水平和竖直方向-->
-    <!--gravity：属性比较多。top,bottom,left,right，center,center_vertical,center_horizontal等。-->
-</clip>

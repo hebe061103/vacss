@@ -6,6 +6,23 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <com.zt.vacss.CircularProgressView
+        android:id="@+id/progress_bar2"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_centerInParent="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="62dp"
+        app:inCircleColor="#DCDCDC"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/battery"
+        app:lineWidth="5dp"
+        app:outCircleColor="#F0F0F0"
+        app:progressColor="#50CE7B"
+        app:textBold="true"
+        app:textColor="#50CE7B" />
+
     <ImageView
         android:id="@+id/menu_img"
         android:layout_width="44dp"
@@ -22,43 +39,30 @@
         android:id="@+id/display_value"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
         android:text="@string/display_rssi_value"
         android:textSize="15sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageView
-        android:id="@+id/iv"
-        android:layout_width="254dp"
-        android:layout_height="144dp"
-        android:layout_marginTop="136dp"
-        android:contentDescription="充电动画"
-        android:src="@drawable/clip"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.496"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="HardcodedText,ImageContrastCheck" />
-
     <TextView
         android:id="@+id/battery"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="64dp"
+        android:layout_marginEnd="65dp"
         android:text="@string/电池电压"
         android:textSize="22sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/capacitance" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/capacitance"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="56dp"
+        android:layout_marginStart="63dp"
+        android:layout_marginTop="64dp"
         android:text="@string/电容电压"
         android:textSize="22sp"
         app:layout_constraintStart_toStartOf="parent"
@@ -68,57 +72,62 @@
         android:id="@+id/battery_voltage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginEnd="82dp"
         android:text="@string/电池伏特"
         android:textSize="15sp"
-        app:layout_constraintStart_toEndOf="@+id/battery"
-        app:layout_constraintTop_toBottomOf="@+id/capacitance_voltage" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/progress_bar2" />
 
     <TextView
         android:id="@+id/capacitance_voltage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="68dp"
+        android:layout_marginStart="78dp"
+        android:layout_marginTop="15dp"
         android:text="@string/电容伏特"
         android:textSize="15sp"
-        app:layout_constraintStart_toEndOf="@+id/capacitance"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/progress_bar" />
 
     <Button
         android:id="@+id/capacitance_charge"
-        android:layout_width="100dp"
-        android:layout_height="48dp"
-        android:layout_marginTop="68dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="56dp"
+        android:layout_marginTop="52dp"
         android:text="@string/电容充电"
         android:textSize="12sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/iv" />
+        app:layout_constraintTop_toBottomOf="@+id/capacitance_voltage" />
 
     <TextView
         android:id="@+id/bl_connect_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="300dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
         android:hint="@string/连接状态"
         android:textColorHint="#8D6E63"
         android:textSize="16sp"
-        app:layout_constraintStart_toEndOf="@+id/textView10"
+        app:layout_constraintStart_toEndOf="@+id/menu_img"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/textView10"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="300dp"
-        android:text="@string/蓝牙连接状态"
-        android:textSize="16sp"
+    <com.zt.vacss.CircularProgressView
+        android:id="@+id/progress_bar"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_centerInParent="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginStart="60dp"
+        android:layout_marginTop="8dp"
+        app:inCircleColor="#DCDCDC"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/capacitance"
+        app:lineWidth="5dp"
+        app:outCircleColor="#F0F0F0"
+        app:progressColor="#50CE7B"
+        app:textBold="true"
+        app:textColor="#50CE7B" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
