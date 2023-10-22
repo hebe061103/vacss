@@ -25,6 +25,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Vacss"
         tools:ignore="UnusedAttribute">
+        <service
+            android:name=".MyService"
+            android:enabled="true"
+            android:exported="true">
+
+        </service>
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
