@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -47,6 +48,7 @@ public class Engineeringmode extends AppCompatActivity {
                     faSong.setEnabled(true);
                     ck_sent.setEnabled(true);
                     sendEditProcess();
+                    displayData();
                 }
             }
         });
@@ -58,9 +60,23 @@ public class Engineeringmode extends AppCompatActivity {
             public void onClick(View view) {
                 String sendEdit = faSong.getText().toString();
                 if(!sendEdit.isEmpty()) {
-                    BleClientActivity.sendMsg(sendEdit);
+                    BleClientActivity.sendData(sendEdit);
+                    faSong.setText("");
+                    Toast.makeText(Engineeringmode.this, "巳发送", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+    }
+    private void displayData(){
+        new Thread(){
+            /** @noinspection InfiniteLoopStatement*/
+            public void run(){
+                while (true){
+                    if(BleClientActivity.inputData!=null) {
+                        jieShou.setText(BleClientActivity.inputData);
+                    }
+                }
+            }
+        }.start();
     }
 }

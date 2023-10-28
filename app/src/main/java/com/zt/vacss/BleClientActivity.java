@@ -44,11 +44,14 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 /** @noinspection deprecation*/
 public class BleClientActivity extends AppCompatActivity implements EasyPermissions.RationaleCallbacks {
+    public static String inputData;
     private final List<BluetoothDevice> mDeviceList = new ArrayList<>();
     private static final BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
     private RecyclerView mRecyclerView;
     public static BluetoothSocket mSocket;
+    private static InputStream inputStream;
+    private static OutputStream outputStream;
     private Button re_scan;
     private ProgressDialog pd;
     private int item_locale;
@@ -136,8 +139,9 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                 goAnim();
                 if(!isPaired(mDeviceList.get(item_locale))){
                     mDeviceList.get(item_locale).createBond();
+                }else{
+                connectToDevice(mDeviceList.get(item_locale));
                 }
-                connectHc06();
             } else if (itemId == R.id.disconnect_item) {
                 goAnim();
                 try {
@@ -180,38 +184,63 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
             showLog("unpairDevice:"+e.getMessage());
         }
     }
-    /**
-     * 连接设备
-     *
-     */
+    // 连接到设备
     @SuppressLint("MissingPermission")
-    private void connectHc06() {
-        BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(mDeviceList.get(item_locale).getAddress());
+    private void connectToDevice(BluetoothDevice device) {
         UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
         try {
             mSocket = device.createRfcommSocketToServiceRecord(uuid);
+            mSocket.connect();
+
+            // 获取输入输出流
+            inputStream = mSocket.getInputStream();
+            outputStream = mSocket.getOutputStream();
         } catch (IOException e) {
-            e.printStackTrace();
+            // 处理连接异常
         }
+    }
+
+    // 发送数据
+    public static void sendData(String data) {
+        try {
+            outputStream.write(data.getBytes());
+        } catch (IOException e) {
+            // 处理发送异常
+        }
+    }
+
+    // 接收数据
+    public static void receiveData() {
+        byte[] buffer = new byte[1024];
+        final int[] bytes = new int[1];
         new Thread(){
             @Override
             public void run() {
-                mBluetoothAdapter.cancelDiscovery();
-                try {
-                    mSocket.connect();
-                } catch (IOException e) {
+                while (true) {
                     try {
-                        mSocket.close();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
+                        bytes[0] = inputStream.read(buffer);
+                        inputData = new String(buffer, 0, bytes[0]);
+                        // 处理接收到的数据
+                    } catch (IOException e) {
+                        // 处理接收异常
+                        break;
                     }
-                    e.printStackTrace();
                 }
                 super.run();
             }
         }.start();
     }
-
+    // 断开蓝牙连接
+    public static void disconnectFromDevice() {
+        if (mSocket != null) {
+            try {
+                mSocket.close();
+                mSocket=null;
+            } catch (IOException e) {
+                // 处理关闭异常
+            }
+        }
+    }
     private final BroadcastReceiver mBluetoothReceiver = new BroadcastReceiver() {
         @SuppressLint("MissingPermission")
         @Override
@@ -228,6 +257,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                         break;
                     case BluetoothDevice.ACTION_ACL_CONNECTED:
                         showToast("连接成功");
+                        receiveData();
                         editor.putString("online",mDeviceList.get(item_locale).getName());
                         editor.apply();
                         connect_ok=true;
@@ -252,52 +282,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);//蓝牙连接成功
         filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED); //蓝牙连接失败
         registerReceiver(mBluetoothReceiver, filter);
-    }
-    /**
-     * 发送消息
-     *
-     */
-    public static void sendMsg(String message) {
-        if (mSocket == null) {
-            showLog("sendMsg socket is null");
-            return;
-        }
-        new Thread() {
-            @Override
-            public void run() {
-                super.run();
-                try {
-                    OutputStream outputStream = mSocket.getOutputStream();
-                    outputStream.write(message.getBytes());
-                } catch (Exception e) {
-                    showLog("error:sendMsgException:{}" + e.getMessage());
-                }
-            }
-        }.start();
-    }
-    /**
-     * 接收数据
-     */
-    public static void receiverData() {
-        if (mSocket == null) {
-            showLog("Receiver socket is null");
-            return;
-        }
-        new Thread() {
-            @Override
-            public void run() {
-                super.run();
-                try {
-                    InputStream inputStream = mSocket.getInputStream();
-                    byte[] buffer = new byte[1024];
-                    int length = inputStream.read(buffer);
-                    String message = new String(buffer, 0, length);
-
-                } catch (Exception e) {
-                    showLog("error: ReceiverMsgException : {}" + e.getMessage());
-                }
-            }
-        }.start();
     }
     /**
      * 重写方法将权限请求结果传递给EasyPermission

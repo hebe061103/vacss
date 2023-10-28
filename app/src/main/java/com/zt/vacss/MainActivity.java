@@ -34,7 +34,7 @@ import pub.devrel.easypermissions.EasyPermissions;
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks{
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     private TextView rssi_value ,bl_data;
-    private Boolean exit;
+    private Boolean exit=false;
     long lastBack = 0;
 
     @Override
@@ -73,6 +73,21 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             }
             return true;
         });
+        bl_data.setOnLongClickListener(view -> {
+                if (readDate("online")!=null) {
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("是否要断开连接?")
+                            .setMessage("确定吗?")
+                            .setPositiveButton("取消", null)
+                            .setNegativeButton("确定", (dialog, which) -> {
+                                BleClientActivity.disconnectFromDevice();
+                                deleteData("online");
+                                bl_Status();
+                            })
+                            .show();
+                }
+            return true;
+        });
         progress_bar.setProgress(50);
         progress_bar.setText(50+"%");
         progress_bar2.setProgress(20);
@@ -88,14 +103,14 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         popupMenu.setOnMenuItemClickListener(item -> {
             int itemId = item.getItemId();
             if (itemId == R.id.scan_bt) {
-                goAnim();
                 exit=true;
+                goAnim();
                 mBluetoothAdapter.cancelDiscovery();
                 Intent intent = new Intent(MainActivity.this, BleClientActivity.class);
                 startActivities(new Intent[]{intent});
             } else if (itemId == R.id.about) {
-                goAnim();
                 exit=true;
+                goAnim();
                 mBluetoothAdapter.cancelDiscovery();
                 Intent intent = new Intent(MainActivity.this, about.class);
                 startActivities(new Intent[]{intent});
@@ -154,6 +169,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 short rssi = Objects.requireNonNull(intent.getExtras()).getShort(BluetoothDevice.EXTRA_RSSI);//获取额外rssi值
                 rssi_value.setText(device.getName() + "\n"+"信号值:" + rssi);//显示rssi到控件上
                 mBluetoothAdapter.cancelDiscovery();//关闭搜索
+                exit=false;
             } else {
                 rssi_value.setText("❀");
             }
@@ -169,21 +185,20 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         editor.remove(key); // 根据key删除数据
         editor.apply();
     }
+    @SuppressLint("MissingPermission")
     private void scanRssiValue(){
-        new Thread(new Runnable() {
-            @SuppressLint("MissingPermission")
-            @Override
-            public void run() {
-                while (!exit) {
-                    mBluetoothAdapter.startDiscovery();
-                    sleepMS(5000);
-                }
+        new Thread(() -> {
+            while (!exit) {
+                exit=true;
+                mBluetoothAdapter.startDiscovery();
+                sleepMS(5000);
             }
         }).start();
     }
     private void bl_Status(){
         if(!(readDate("online") == null)){
-            bl_data.setTextColor(Color.parseColor("#66FF33"));
+            bl_data.setTextColor(Color.parseColor("#00ff66"));
+            bl_data.setTextSize(18);
             bl_data.setText(readDate("online"));
         }else {
             bl_data.setTextColor(Color.parseColor("#CCCCCC"));
