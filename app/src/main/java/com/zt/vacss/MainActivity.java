@@ -33,6 +33,7 @@ import pub.devrel.easypermissions.EasyPermissions;
 /** @noinspection deprecation*/
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks{
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    BluetoothDevice device;
     private TextView rssi_value ,bl_data;
     private Boolean exit=false;
     long lastBack = 0;
@@ -76,11 +77,10 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         bl_data.setOnLongClickListener(view -> {
                 if (readDate("online")!=null) {
                     new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("是否要断开连接?")
+                            .setTitle("是否要删除默认连接?")
                             .setMessage("确定吗?")
                             .setPositiveButton("取消", null)
                             .setNegativeButton("确定", (dialog, which) -> {
-                                BleClientActivity.disconnectFromDevice();
                                 deleteData("online");
                                 bl_Status();
                             })
@@ -163,15 +163,18 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         @Override
         public void onReceive(Context context, Intent intent) {
             // TODO Auto-generated method stub
-            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);//获取此时找到的远程设备对象
+            device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);//获取此时找到的远程设备对象
             assert device != null;
             if (readDate("deviceName")!=null && readDate("deviceName").equals(device.getAddress())) {//判断远程设备是否与用户目标设备相同
                 short rssi = Objects.requireNonNull(intent.getExtras()).getShort(BluetoothDevice.EXTRA_RSSI);//获取额外rssi值
                 rssi_value.setText(device.getName() + "\n"+"信号值:" + rssi);//显示rssi到控件上
                 mBluetoothAdapter.cancelDiscovery();//关闭搜索
                 exit=false;
-            } else {
+            }else {
                 rssi_value.setText("❀");
+            }
+            if(readDate("online")!=null && readDate("online").equals(device.getAddress())){
+                BleClientActivity.connectToDevice(device);
             }
         }
     }
@@ -195,13 +198,18 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             }
         }).start();
     }
+    @SuppressLint("MissingPermission")
     private void bl_Status(){
-        if(!(readDate("online") == null)){
-            bl_data.setTextColor(Color.parseColor("#00ff66"));
-            bl_data.setTextSize(18);
-            bl_data.setText(readDate("online"));
+        if(!(readDate("online") == null) && !BleClientActivity.connect_ok){
+            mBluetoothAdapter.startDiscovery();
+            if(BleClientActivity.connect_ok) {
+                bl_data.setTextColor(Color.parseColor("#00ff66"));
+                bl_data.setTextSize(18);
+                bl_data.setText(device.getName());
+            }
         }else {
             bl_data.setTextColor(Color.parseColor("#CCCCCC"));
+            bl_data.setTextSize(18);
             bl_data.setText("未连接");
         }
     }

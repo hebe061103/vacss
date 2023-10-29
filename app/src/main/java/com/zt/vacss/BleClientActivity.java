@@ -135,21 +135,21 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         //点击事件
         popupMenu.setOnMenuItemClickListener(item -> {
             int itemId = item.getItemId();
-            if (itemId == R.id.connect_item) {
+            if (itemId == R.id.connect_item) {//连接蓝牙
                 goAnim();
                 if(!isPaired(mDeviceList.get(item_locale))){
                     mDeviceList.get(item_locale).createBond();
                 }else{
                 connectToDevice(mDeviceList.get(item_locale));
                 }
-            } else if (itemId == R.id.disconnect_item) {
+            } else if (itemId == R.id.disconnect_item) {//断开连接
                 goAnim();
                 try {
                     mSocket.close();
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
-            } else if (itemId == R.id.clean_bond){
+            } else if (itemId == R.id.clean_bond){//取消匹配
                 goAnim();
                 new AlertDialog.Builder(this)
                         .setTitle("取消配对")
@@ -161,9 +161,18 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                             searchBluetooth();
                         })
                         .show();
-            }else if (itemId == R.id.add_rssi_check) {
+            }else if (itemId == R.id.add_rssi_check) {//添加到指定信号检测
                 goAnim();
                 editor.putString("deviceName",mDeviceList.get(item_locale).getAddress() );
+                editor.apply();
+            }else if (itemId == R.id.add_default_device) {//添加到默认连接的设备
+                goAnim();
+                if(!isPaired(mDeviceList.get(item_locale))){
+                    mDeviceList.get(item_locale).createBond();
+                }else{
+                    connectToDevice(mDeviceList.get(item_locale));
+                }
+                editor.putString("online",mDeviceList.get(item_locale).getAddress());
                 editor.apply();
             }
             return false;
@@ -186,7 +195,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     }
     // 连接到设备
     @SuppressLint("MissingPermission")
-    private void connectToDevice(BluetoothDevice device) {
+    public static void connectToDevice(BluetoothDevice device) {
         UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
         try {
             mSocket = device.createRfcommSocketToServiceRecord(uuid);
@@ -258,8 +267,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                     case BluetoothDevice.ACTION_ACL_CONNECTED:
                         showToast("连接成功");
                         receiveData();
-                        editor.putString("online",mDeviceList.get(item_locale).getName());
-                        editor.apply();
                         connect_ok=true;
                         break;
                     case BluetoothDevice.ACTION_ACL_DISCONNECTED:
