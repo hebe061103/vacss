@@ -13,4 +13,7 @@
     <item
         android:id="@+id/add_rssi_check"
         android:title="目标信号检测"/>
+    <item
+        android:id="@+id/add_default_device"
+        android:title="添加到默认连接"/>
 </menu>
