@@ -45,6 +45,7 @@ public class Engineeringmode extends AppCompatActivity {
                     jieShou.setHint("未连接HC6:");
                 }else {
                     jieShou.setHint("巳准备好接收:");
+                    BleClientActivity.receiveData();
                     faSong.setEnabled(true);
                     ck_sent.setEnabled(true);
                     sendEditProcess();

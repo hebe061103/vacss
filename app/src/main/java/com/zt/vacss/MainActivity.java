@@ -174,7 +174,10 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 rssi_value.setText("❀");
             }
             if(readDate("online")!=null && readDate("online").equals(device.getAddress())){
-                BleClientActivity.connectToDevice(device);
+                if(!BleClientActivity.connect_ok) {
+                    BleClientActivity.connectToDevice(device);
+                    Toast.makeText(context, device.getName(), Toast.LENGTH_SHORT).show();
+                }
             }
         }
     }
@@ -200,12 +203,15 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     }
     @SuppressLint("MissingPermission")
     private void bl_Status(){
-        if(!(readDate("online") == null) && !BleClientActivity.connect_ok){
-            mBluetoothAdapter.startDiscovery();
-            if(BleClientActivity.connect_ok) {
+        if(!(readDate("online") == null)) {
+            if (BleClientActivity.connect_ok) {
                 bl_data.setTextColor(Color.parseColor("#00ff66"));
                 bl_data.setTextSize(18);
                 bl_data.setText(device.getName());
+            }else{
+                bl_data.setTextColor(Color.parseColor("#CCCCCC"));
+                bl_data.setTextSize(18);
+                bl_data.setText("默认设备不在范围内!");
             }
         }else {
             bl_data.setTextColor(Color.parseColor("#CCCCCC"));
@@ -232,7 +238,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     protected void goAnim(){
         // 震动效果的系统服务
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-        vibrator.vibrate(15);//振动0.5秒
+        vibrator.vibrate(30);//振动0.5秒
         // 下边是可以使震动有规律的震动  -1：表示不重复 0：循环的震动
     }
     private void showToast(String text) {

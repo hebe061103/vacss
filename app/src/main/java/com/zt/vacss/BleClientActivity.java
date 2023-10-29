@@ -144,11 +144,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                 }
             } else if (itemId == R.id.disconnect_item) {//断开连接
                 goAnim();
-                try {
-                    mSocket.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
+                disconnectFromDevice();
             } else if (itemId == R.id.clean_bond){//取消匹配
                 goAnim();
                 new AlertDialog.Builder(this)
@@ -169,11 +165,10 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                 goAnim();
                 if(!isPaired(mDeviceList.get(item_locale))){
                     mDeviceList.get(item_locale).createBond();
-                }else{
-                    connectToDevice(mDeviceList.get(item_locale));
+                }else {
+                    editor.putString("online", mDeviceList.get(item_locale).getAddress());
+                    editor.apply();
                 }
-                editor.putString("online",mDeviceList.get(item_locale).getAddress());
-                editor.apply();
             }
             return false;
         });
@@ -222,7 +217,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     public static void receiveData() {
         byte[] buffer = new byte[1024];
         final int[] bytes = new int[1];
-        new Thread(){
+        new Thread(new Runnable() {
             @Override
             public void run() {
                 while (true) {
@@ -235,9 +230,8 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                         break;
                     }
                 }
-                super.run();
             }
-        }.start();
+        }).start();
     }
     // 断开蓝牙连接
     public static void disconnectFromDevice() {
@@ -266,13 +260,10 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                         break;
                     case BluetoothDevice.ACTION_ACL_CONNECTED:
                         showToast("连接成功");
-                        receiveData();
                         connect_ok=true;
                         break;
                     case BluetoothDevice.ACTION_ACL_DISCONNECTED:
                         showToast("连接失败");
-                        editor.remove("online");
-                        editor.apply();
                         connect_ok=false;
                         break;
                 }
@@ -315,7 +306,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     protected void goAnim(){
         // 震动效果的系统服务
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-        vibrator.vibrate(15);//振动0.5秒
+        vibrator.vibrate(30);//振动0.5秒
         // 下边是可以使震动有规律的震动  -1：表示不重复 0：循环的震动
     }
     private void showToast(String text) {
