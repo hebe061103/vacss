@@ -69,6 +69,14 @@ public class BlueDeviceItemAdapter extends RecyclerView.Adapter<BlueDeviceItemAd
                     return true;
                 }
             });
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (null != MonItemClickListener) {
+                        MonItemClickListener.onRecyclerItemClickListener(getAdapterPosition());
+                    }
+                }
+            });
         }
     }
     private static OnRecyclerItemLongClickListener MonItemLongClickListener=null;
@@ -79,5 +87,13 @@ public class BlueDeviceItemAdapter extends RecyclerView.Adapter<BlueDeviceItemAd
     //创建点击类接口
     public interface OnRecyclerItemLongClickListener{
         void onRecyclerItemLongClickListener(int postion);
+    }
+    private static OnRecyclerItemClickListener MonItemClickListener=null;
+    //设置点击监听事件用于外部引用
+    public void setRecyclerItemClickListener(OnRecyclerItemClickListener listener){
+        MonItemClickListener=listener;
+    }
+    public interface OnRecyclerItemClickListener{
+        void onRecyclerItemClickListener(int postion);
     }
 }

@@ -118,10 +118,25 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                 rssi= Objects.requireNonNull(intent.getExtras()).getShort(BluetoothDevice.EXTRA_RSSI);
                 mDeviceList.add(device);
                 mRecyclerView.setAdapter(mRecycler);
-                mRecycler.setRecyclerItemLongClickListener(position -> {
-                    BleClientActivity.this.goAnim();
+                mRecycler.setRecyclerItemClickListener(position -> {
+                    goAnim();
                     item_locale = position;
                     BleClientActivity.this.showPopupMenu(mRecyclerView.getChildAt(position));
+                });
+                mRecycler.setRecyclerItemLongClickListener(position -> {
+                if(isPaired(mDeviceList.get(item_locale))) {
+                    goAnim();
+                    item_locale=position;
+                    new AlertDialog.Builder(BleClientActivity.this)
+                            .setTitle("取消配对")
+                            .setMessage("确定吗?")
+                            .setPositiveButton("取消", null)
+                            .setNegativeButton("确定", (dialog, which) -> {
+                                unpairDevice(mDeviceList.get(item_locale));
+                                mDeviceList.clear();
+                                searchBluetooth();
+                            }).show();
+                    }
                 });
             }
         }
@@ -137,38 +152,15 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
             int itemId = item.getItemId();
             if (itemId == R.id.connect_item) {//连接蓝牙
                 goAnim();
-                if(!isPaired(mDeviceList.get(item_locale))){
-                    mDeviceList.get(item_locale).createBond();
-                }else{
                 connectToDevice(mDeviceList.get(item_locale));
-                }
             } else if (itemId == R.id.disconnect_item) {//断开连接
                 goAnim();
                 disconnectFromDevice();
-            } else if (itemId == R.id.clean_bond){//取消匹配
-                goAnim();
-                new AlertDialog.Builder(this)
-                        .setTitle("取消配对")
-                        .setMessage("确定吗?")
-                        .setPositiveButton("取消", null)
-                        .setNegativeButton("确定", (dialog, which) -> {
-                            unpairDevice(mDeviceList.get(item_locale));
-                            mDeviceList.clear();
-                            searchBluetooth();
-                        })
-                        .show();
+                connect_ok=false;
             }else if (itemId == R.id.add_rssi_check) {//添加到指定信号检测
                 goAnim();
                 editor.putString("deviceName",mDeviceList.get(item_locale).getAddress() );
                 editor.apply();
-            }else if (itemId == R.id.add_default_device) {//添加到默认连接的设备
-                goAnim();
-                if(!isPaired(mDeviceList.get(item_locale))){
-                    mDeviceList.get(item_locale).createBond();
-                }else {
-                    editor.putString("online", mDeviceList.get(item_locale).getAddress());
-                    editor.apply();
-                }
             }
             return false;
         });
@@ -191,17 +183,19 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     // 连接到设备
     @SuppressLint("MissingPermission")
     public static void connectToDevice(BluetoothDevice device) {
-        UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
-        try {
-            mSocket = device.createRfcommSocketToServiceRecord(uuid);
-            mSocket.connect();
+        new Thread(() -> {
+            UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+            try {
+                mSocket = device.createRfcommSocketToServiceRecord(uuid);
+                mSocket.connect();
 
-            // 获取输入输出流
-            inputStream = mSocket.getInputStream();
-            outputStream = mSocket.getOutputStream();
-        } catch (IOException e) {
-            // 处理连接异常
-        }
+                // 获取输入输出流
+                inputStream = mSocket.getInputStream();
+                outputStream = mSocket.getOutputStream();
+            } catch (IOException e) {
+                // 处理连接异常
+            }
+        }).start();
     }
 
     // 发送数据
@@ -215,20 +209,19 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
 
     // 接收数据
     public static void receiveData() {
-        byte[] buffer = new byte[1024];
-        final int[] bytes = new int[1];
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    try {
-                        bytes[0] = inputStream.read(buffer);
-                        inputData = new String(buffer, 0, bytes[0]);
-                        // 处理接收到的数据
-                    } catch (IOException e) {
-                        // 处理接收异常
-                        break;
-                    }
+        new Thread(() -> {
+            byte[] buffer = new byte[1024];
+            int len=0;
+            while (true) {
+                try {
+                    len= inputStream.read(buffer);
+                    inputData = new String(buffer, 0, len);
+                    inputStream.close();
+                    // 处理接收到的数据
+                } catch (IOException e) {
+                    // 处理接收异常
+                    e.printStackTrace();
+                    break;
                 }
             }
         }).start();
@@ -238,7 +231,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         if (mSocket != null) {
             try {
                 mSocket.close();
-                mSocket=null;
             } catch (IOException e) {
                 // 处理关闭异常
             }
@@ -260,6 +252,8 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                         break;
                     case BluetoothDevice.ACTION_ACL_CONNECTED:
                         showToast("连接成功");
+                        editor.putString("online", mDeviceList.get(item_locale).getAddress());
+                        editor.apply();
                         connect_ok=true;
                         break;
                     case BluetoothDevice.ACTION_ACL_DISCONNECTED:

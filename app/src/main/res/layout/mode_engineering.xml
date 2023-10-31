@@ -100,7 +100,7 @@
         android:textSize="15sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/hc06_btn" />
+        app:layout_constraintTop_toBottomOf="@+id/hc06_btn"/>
 
     <EditText
         android:id="@+id/fasong"

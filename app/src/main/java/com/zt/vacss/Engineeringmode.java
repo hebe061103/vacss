@@ -1,9 +1,10 @@
 package com.zt.vacss;
 
+import static com.zt.vacss.BleClientActivity.receiveData;
+
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -37,34 +38,27 @@ public class Engineeringmode extends AppCompatActivity {
             Intent intent = new Intent(Engineeringmode.this,BleServerActivity.class);
             startActivities(new Intent[]{intent});
         });
-        hc06_btn.setOnClickListener(new View.OnClickListener() {
-            @SuppressLint("SetTextI18n")
-            @Override
-            public void onClick(View v) {
-                if(!BleClientActivity.connect_ok) {
-                    jieShou.setHint("未连接HC6:");
-                }else {
-                    jieShou.setHint("巳准备好接收:");
-                    BleClientActivity.receiveData();
-                    faSong.setEnabled(true);
-                    ck_sent.setEnabled(true);
-                    sendEditProcess();
-                    displayData();
-                }
+        hc06_btn.setOnClickListener(v -> {
+            if(!BleClientActivity.connect_ok) {
+                jieShou.setHint("未连接HC6:");
+            }else {
+                jieShou.setHint("巳准备好接收:");
+                faSong.setEnabled(true);
+                ck_sent.setEnabled(true);
+                receiveData();
+                sendEditProcess();
+                displayData();
             }
         });
     }
 
     private void sendEditProcess() {
-        ck_sent.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String sendEdit = faSong.getText().toString();
-                if(!sendEdit.isEmpty()) {
-                    BleClientActivity.sendData(sendEdit);
-                    faSong.setText("");
-                    Toast.makeText(Engineeringmode.this, "巳发送", Toast.LENGTH_SHORT).show();
-                }
+        ck_sent.setOnClickListener(view -> {
+            String sendEdit = faSong.getText().toString();
+            if(!sendEdit.isEmpty()) {
+                BleClientActivity.sendData(sendEdit);
+                faSong.setText("");
+                Toast.makeText(Engineeringmode.this, "巳发送", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -79,5 +73,8 @@ public class Engineeringmode extends AppCompatActivity {
                 }
             }
         }.start();
+    }
+    protected void onDestroy() {
+        super.onDestroy();
     }
 }
