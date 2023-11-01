@@ -21,6 +21,5 @@
     <string name="电容电压">电容电压:</string>
     <string name="电池伏特">电池伏特</string>
     <string name="电容伏特">电容伏特</string>
-    <string name="电容充电">给电容充电</string>
     <string name="连接状态">连接状态</string>
 </resources>

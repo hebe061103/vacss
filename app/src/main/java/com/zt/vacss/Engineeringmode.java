@@ -1,6 +1,9 @@
 package com.zt.vacss;
 
+import static com.zt.vacss.BleClientActivity.connect_ok;
+import static com.zt.vacss.BleClientActivity.inputData;
 import static com.zt.vacss.BleClientActivity.receiveData;
+import static com.zt.vacss.BleClientActivity.sendData;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -39,7 +42,7 @@ public class Engineeringmode extends AppCompatActivity {
             startActivities(new Intent[]{intent});
         });
         hc06_btn.setOnClickListener(v -> {
-            if(!BleClientActivity.connect_ok) {
+            if(!connect_ok) {
                 jieShou.setHint("未连接HC6:");
             }else {
                 jieShou.setHint("巳准备好接收:");
@@ -56,7 +59,7 @@ public class Engineeringmode extends AppCompatActivity {
         ck_sent.setOnClickListener(view -> {
             String sendEdit = faSong.getText().toString();
             if(!sendEdit.isEmpty()) {
-                BleClientActivity.sendData(sendEdit);
+                sendData(sendEdit);
                 faSong.setText("");
                 Toast.makeText(Engineeringmode.this, "巳发送", Toast.LENGTH_SHORT).show();
             }
@@ -67,8 +70,8 @@ public class Engineeringmode extends AppCompatActivity {
             /** @noinspection InfiniteLoopStatement*/
             public void run(){
                 while (true){
-                    if(BleClientActivity.inputData!=null) {
-                        jieShou.setText(BleClientActivity.inputData);
+                    if(inputData!=null) {
+                        jieShou.setText(inputData);
                     }
                 }
             }

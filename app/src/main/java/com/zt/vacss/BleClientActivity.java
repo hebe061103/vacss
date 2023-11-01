@@ -37,7 +37,6 @@ import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 import pub.devrel.easypermissions.EasyPermissions;
@@ -56,7 +55,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     private ProgressDialog pd;
     private int item_locale;
     public static boolean connect_ok;
-    public static short rssi;
     private BlueDeviceItemAdapter mRecycler;
     private SharedPreferences.Editor editor;
     @SuppressLint("MissingPermission")
@@ -115,7 +113,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         if (!mDeviceList.contains(device)) {
             assert device != null;
             if (!(device.getName() == null)) {
-                rssi= Objects.requireNonNull(intent.getExtras()).getShort(BluetoothDevice.EXTRA_RSSI);
                 mDeviceList.add(device);
                 mRecyclerView.setAdapter(mRecycler);
                 mRecycler.setRecyclerItemClickListener(position -> {
@@ -173,6 +170,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     /** @noinspection JavaReflectionMemberAccess*/ //反射来调用BluetoothDevice.removeBond取消设备的配对
     private void unpairDevice(BluetoothDevice device) {
         try {
+            //noinspection rawtypes
             Method m = device.getClass()
                     .getMethod("removeBond", (Class[]) null);
             m.invoke(device, (Object[]) null);
@@ -211,12 +209,11 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     public static void receiveData() {
         new Thread(() -> {
             byte[] buffer = new byte[1024];
-            int len=0;
+            int len;
             while (true) {
                 try {
                     len= inputStream.read(buffer);
                     inputData = new String(buffer, 0, len);
-                    inputStream.close();
                     // 处理接收到的数据
                 } catch (IOException e) {
                     // 处理接收异常
@@ -281,7 +278,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
         // 回调结果传递给EasyPermission
         EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
     }
@@ -310,7 +306,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         Log.d("BleClientActivity:", "showLog: " + text);
     }
     protected void onDestroy() {
-        unregisterReceiver(mBluetoothReceiver);
         super.onDestroy();
     }
 }

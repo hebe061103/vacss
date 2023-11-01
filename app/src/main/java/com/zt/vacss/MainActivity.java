@@ -1,7 +1,9 @@
 package com.zt.vacss;
 
 
+import static com.zt.vacss.BleClientActivity.connectToDevice;
 import static com.zt.vacss.BleClientActivity.connect_ok;
+import static com.zt.vacss.BleClientActivity.disconnectFromDevice;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -49,8 +51,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         defaultDevice();
     }
     private void init() {
-        CircularProgressView progress_bar = (CircularProgressView) findViewById(R.id.progress_bar);
-        CircularProgressView progress_bar2 = (CircularProgressView) findViewById(R.id.progress_bar2);
+        CircularProgressView progress_bar = findViewById(R.id.progress_bar);
+        CircularProgressView progress_bar2 = findViewById(R.id.progress_bar2);
         //设置过滤器，过滤因远程蓝牙设备被找到而发送的广播 BluetoothDevice.ACTION_FOUND
         IntentFilter iFilter=new IntentFilter();
         iFilter.addAction(BluetoothDevice.ACTION_FOUND);
@@ -87,7 +89,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                             .setMessage("确定吗?")
                             .setPositiveButton("取消", null)
                             .setNegativeButton("确定", (dialog, which) -> {
-                                BleClientActivity.disconnectFromDevice();
+                                disconnectFromDevice();
                                 connect_ok=false;
                                 deleteData("online");
                                 bl_Status();
@@ -131,7 +133,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     }
     private void startEnableBluetooth() {
         if (mBluetoothAdapter == null) {
-            showToast("本设备没有蓝牙功能");
+            Toast.makeText(this, "本设备没有蓝牙功能", Toast.LENGTH_SHORT).show();
             return;
         }
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
@@ -183,7 +185,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 rssi_value.setText("❀");
             }
             if (readDate("online")!=null && readDate("online").equals(device.getAddress())) {//判断远程设备是否与用户目标设备相同
-                BleClientActivity.connectToDevice(device);
+                connectToDevice(device);
             }
             if(BluetoothDevice.ACTION_ACL_CONNECTED.equals(intent.getAction())){
                 connect_ok=true;
@@ -259,9 +261,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         vibrator.vibrate(30);//振动0.5秒
         // 下边是可以使震动有规律的震动  -1：表示不重复 0：循环的震动
-    }
-    private void showToast(String text) {
-        Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
     }
     /**
      * 再次返回键退出程序
