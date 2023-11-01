@@ -1,6 +1,8 @@
 package com.zt.vacss;
 
 
+import static com.zt.vacss.MainActivity.bl_Status;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
@@ -43,7 +45,7 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 /** @noinspection deprecation*/
 public class BleClientActivity extends AppCompatActivity implements EasyPermissions.RationaleCallbacks {
-    public static String inputData;
+    public static String inputData,defaultName;
     private final List<BluetoothDevice> mDeviceList = new ArrayList<>();
     private static final BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -233,7 +235,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
             }
         }
     }
-    private final BroadcastReceiver mBluetoothReceiver = new BroadcastReceiver() {
+    public final BroadcastReceiver mBluetoothReceiver = new BroadcastReceiver() {
         @SuppressLint("MissingPermission")
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -249,12 +251,16 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                         break;
                     case BluetoothDevice.ACTION_ACL_CONNECTED:
                         showToast("连接成功");
+                        showLog("连接成功");
                         editor.putString("online", mDeviceList.get(item_locale).getAddress());
+                        defaultName = mDeviceList.get(item_locale).getName();
                         editor.apply();
                         connect_ok=true;
+                        bl_Status();
                         break;
                     case BluetoothDevice.ACTION_ACL_DISCONNECTED:
                         showToast("连接失败");
+                        showLog("连接失败");
                         connect_ok=false;
                         break;
                 }
@@ -262,7 +268,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         }
     };
 
-    private void registerBluetoothListener() {
+    public void registerBluetoothListener() {
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED); //监听蓝牙关闭和打开状态
         filter.addAction(BluetoothDevice.ACTION_FOUND); //搜索发现设备

@@ -3,6 +3,7 @@ package com.zt.vacss;
 
 import static com.zt.vacss.BleClientActivity.connectToDevice;
 import static com.zt.vacss.BleClientActivity.connect_ok;
+import static com.zt.vacss.BleClientActivity.defaultName;
 import static com.zt.vacss.BleClientActivity.disconnectFromDevice;
 
 import android.Manifest;
@@ -38,10 +39,11 @@ import pub.devrel.easypermissions.EasyPermissions;
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks{
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     static BluetoothDevice device;
-    private TextView rssi_value,bl_data;
+    private TextView rssi_value;
+    @SuppressLint("StaticFieldLeak")
+    public  static TextView bl_data;
     private Boolean exit=false;
     long lastBack = 0;
-    private String dl_name;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,8 +58,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         //设置过滤器，过滤因远程蓝牙设备被找到而发送的广播 BluetoothDevice.ACTION_FOUND
         IntentFilter iFilter=new IntentFilter();
         iFilter.addAction(BluetoothDevice.ACTION_FOUND);
-        iFilter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
-        iFilter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         registerReceiver(new foundReceiver(), iFilter);
         //设置广播接收器和安装过滤器
         ImageView menu_bt = findViewById(R.id.menu_img);
@@ -187,15 +187,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             if (readDate("online")!=null && readDate("online").equals(device.getAddress())) {//判断远程设备是否与用户目标设备相同
                 connectToDevice(device);
             }
-            if(BluetoothDevice.ACTION_ACL_CONNECTED.equals(intent.getAction())){
-                connect_ok=true;
-                dl_name=device.getName();
-                bl_Status();
-            }
-            if(BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(intent.getAction())){
-                connect_ok=false;
-                bl_Status();
-            }
         }
     }
     private String readDate(String key){
@@ -219,11 +210,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }).start();
     }
     @SuppressLint("MissingPermission")
-    private void bl_Status(){
+    public static void bl_Status(){
         if(connect_ok) {
             bl_data.setTextColor(Color.parseColor("#00ff66"));
             bl_data.setTextSize(18);
-            bl_data.setText(dl_name);
+            bl_data.setText(defaultName);
         }else {
             bl_data.setTextColor(Color.parseColor("#CCCCCC"));
             bl_data.setTextSize(18);
