@@ -20,7 +20,6 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.PopupMenu;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -285,9 +284,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         vibrator.vibrate(30);//振动0.5秒
         // 下边是可以使震动有规律的震动  -1：表示不重复 0：循环的震动
-    }
-    private void showToast(String text) {
-        Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
     }
     private static void showLog(String text){
         Log.d("BleClientActivity:", "showLog: " + text);

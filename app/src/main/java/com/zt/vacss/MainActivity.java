@@ -50,7 +50,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     long lastBack = 0;
     private SharedPreferences.Editor editor;
     private boolean defaultScan;
-    private BluetoothDevice deviceSelf;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -215,7 +214,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 for (int i=0;i<mList.size();i++){
                     if(mList.get(i)!=null && mList.get(i).getAddress().equals(readDate("online"))){
                         Log.d(TAG, "onReceive: 连接到设备");
-                        deviceSelf=mList.get(i);
                         connectToDevice(mList.get(i));
                         break;
                     }
