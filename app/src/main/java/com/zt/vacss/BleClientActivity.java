@@ -48,7 +48,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     public static String inputData,defaultName;
     private final List<BluetoothDevice> mDeviceList = new ArrayList<>();
     private static final BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
     private RecyclerView mRecyclerView;
     public static BluetoothSocket mSocket;
     private static InputStream inputStream;
@@ -188,7 +187,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
             try {
                 mSocket = device.createRfcommSocketToServiceRecord(uuid);
                 mSocket.connect();
-
                 // 获取输入输出流
                 inputStream = mSocket.getInputStream();
                 outputStream = mSocket.getOutputStream();
@@ -251,7 +249,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                         break;
                     case BluetoothDevice.ACTION_ACL_CONNECTED:
                         showToast("连接成功");
-                        showLog("连接成功");
                         editor.putString("online", mDeviceList.get(item_locale).getAddress());
                         defaultName = mDeviceList.get(item_locale).getName();
                         editor.apply();
@@ -259,9 +256,9 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                         bl_Status();
                         break;
                     case BluetoothDevice.ACTION_ACL_DISCONNECTED:
-                        showToast("连接失败");
-                        showLog("连接失败");
+                        showToast("连接断开");
                         connect_ok=false;
+                        bl_Status();
                         break;
                 }
             }

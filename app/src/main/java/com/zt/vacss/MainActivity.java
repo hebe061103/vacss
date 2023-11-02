@@ -20,6 +20,7 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Vibrator;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
@@ -31,19 +32,24 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import pub.devrel.easypermissions.EasyPermissions;
 /** @noinspection deprecation*/
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks{
+    private final String TAG = "TAG";
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-    static BluetoothDevice device;
+    private final List<BluetoothDevice> mList = new ArrayList<>();
     private TextView rssi_value;
     @SuppressLint("StaticFieldLeak")
     public  static TextView bl_data;
     private Boolean exit=false;
     long lastBack = 0;
+    private SharedPreferences.Editor editor;
+    private boolean defaultScan;
+    private BluetoothDevice deviceSelf;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,10 +61,15 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     private void init() {
         CircularProgressView progress_bar = findViewById(R.id.progress_bar);
         CircularProgressView progress_bar2 = findViewById(R.id.progress_bar2);
+        SharedPreferences sp = getSharedPreferences("data", MODE_PRIVATE);//获取 SharedPreferences对象
+        editor = sp.edit(); // 获取编辑器对象
         //设置过滤器，过滤因远程蓝牙设备被找到而发送的广播 BluetoothDevice.ACTION_FOUND
         IntentFilter iFilter=new IntentFilter();
         iFilter.addAction(BluetoothDevice.ACTION_FOUND);
-        registerReceiver(new foundReceiver(), iFilter);
+        iFilter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        iFilter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+        iFilter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+        registerReceiver(foundReceiver, iFilter);
         //设置广播接收器和安装过滤器
         ImageView menu_bt = findViewById(R.id.menu_img);
         bl_data = findViewById(R.id.bl_connect_status);
@@ -116,13 +127,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             if (itemId == R.id.scan_bt) {
                 exit=true;
                 goAnim();
-                mBluetoothAdapter.cancelDiscovery();
                 Intent intent = new Intent(MainActivity.this, BleClientActivity.class);
                 startActivities(new Intent[]{intent});
             } else if (itemId == R.id.about) {
                 exit=true;
                 goAnim();
-                mBluetoothAdapter.cancelDiscovery();
                 Intent intent = new Intent(MainActivity.this, about.class);
                 startActivities(new Intent[]{intent});
             }
@@ -165,18 +174,15 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }
     }
     /**
-     * 内部类：当找到一个远程蓝牙设备时执行的广播接收者
-     * @author Administrator
+     * 当找到一个远程蓝牙设备时执行的广播接收者
      *
      */
-    class foundReceiver extends BroadcastReceiver {
+    public final BroadcastReceiver foundReceiver = new BroadcastReceiver() {
         @SuppressLint({"MissingPermission", "SetTextI18n"})
         @Override
         public void onReceive(Context context, Intent intent) {
-            // TODO Auto-generated method stub
-            device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);//获取此时找到的远程设备对象
-            assert device != null;
-            if (readDate("deviceName")!=null && readDate("deviceName").equals(device.getAddress())) {//判断远程设备是否与用户目标设备相同
+            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);//获取此时找到的远程设备对象
+            if (readDate("deviceName")!=null && readDate("deviceName").equals(Objects.requireNonNull(device).getAddress())) {//判断远程设备是否与用户目标设备相同
                 short rssi = Objects.requireNonNull(intent.getExtras()).getShort(BluetoothDevice.EXTRA_RSSI);//获取额外rssi值
                 rssi_value.setText(device.getName() + "\n"+"信号值:" + rssi);//显示rssi到控件上
                 mBluetoothAdapter.cancelDiscovery();//关闭搜索
@@ -184,11 +190,37 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             }else {
                 rssi_value.setText("❀");
             }
-            if (readDate("online")!=null && readDate("online").equals(device.getAddress())) {//判断远程设备是否与用户目标设备相同
-                connectToDevice(device);
+            if(device !=null && device.getName()!=null){
+                mList.add(device);
+            }
+            if(device != null && BluetoothDevice.ACTION_ACL_CONNECTED.equals(intent.getAction())){
+                if(deviceSelf!=null) {
+                    Toast.makeText(context, "连接成功", Toast.LENGTH_SHORT).show();
+                    editor.putString("online", deviceSelf.getAddress());
+                    defaultName = deviceSelf.getName();
+                    editor.apply();
+                    connect_ok = true;
+                    defaultScan = false;
+                    bl_Status();
+                }
+            }
+            if(BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(intent.getAction())){
+                Toast.makeText(context, "连接断开", Toast.LENGTH_SHORT).show();
+                connect_ok=false;
+                bl_Status();
+            }
+            if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(intent.getAction())){
+                for (int i=0;i<mList.size();i++){
+                    if(mList.get(i)!=null && mList.get(i).getAddress().equals(readDate("online"))){
+                        Log.d(TAG, "onReceive: 连接到设备");
+                        deviceSelf=mList.get(i);
+                        connectToDevice(mList.get(i));
+                        break;
+                    }
+                }
             }
         }
-    }
+    };
     private String readDate(String key){
         SharedPreferences sp = getSharedPreferences("data",MODE_PRIVATE);
         return sp.getString(key,null);
@@ -224,9 +256,12 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     @SuppressLint("MissingPermission")
     private void defaultDevice(){
         new Thread(() -> {
-            while(true){
-                if(readDate("online")!=null && !connect_ok){
+            while (true) {
+                if (readDate("online") != null && !connect_ok && !defaultScan) {
+                    mList.clear();
                     mBluetoothAdapter.startDiscovery();
+                    defaultScan=true;
+                    Log.d(this.getLocalClassName(), "defaultDevice: 开始发现设备");
                 }
             }
         }).start();
