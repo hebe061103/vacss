@@ -3,8 +3,9 @@ package com.zt.vacss;
 
 import static com.zt.vacss.BleClientActivity.connectToDevice;
 import static com.zt.vacss.BleClientActivity.connect_ok;
-import static com.zt.vacss.BleClientActivity.defaultName;
 import static com.zt.vacss.BleClientActivity.disconnectFromDevice;
+import static com.zt.vacss.BleClientActivity.item_locale;
+import static com.zt.vacss.BleClientActivity.mDeviceList;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -103,6 +104,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                                 disconnectFromDevice();
                                 connect_ok=false;
                                 deleteData("online");
+                                deleteData("defaultName");
                                 bl_Status();
                             })
                             .show();
@@ -194,15 +196,15 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 mList.add(device);
             }
             if(device != null && BluetoothDevice.ACTION_ACL_CONNECTED.equals(intent.getAction())){
-                if(deviceSelf!=null) {
-                    Toast.makeText(context, "连接成功", Toast.LENGTH_SHORT).show();
-                    editor.putString("online", deviceSelf.getAddress());
-                    defaultName = deviceSelf.getName();
+                Toast.makeText(context, "连接成功", Toast.LENGTH_SHORT).show();
+                if(readDate("defaultName")==null) {
+                    editor.putString("online", mDeviceList.get(item_locale).getAddress());
+                    editor.putString("defaultName",mDeviceList.get(item_locale).getName());
                     editor.apply();
-                    connect_ok = true;
-                    defaultScan = false;
-                    bl_Status();
                 }
+                connect_ok=true;
+                defaultScan = false;
+                bl_Status();
             }
             if(BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(intent.getAction())){
                 Toast.makeText(context, "连接断开", Toast.LENGTH_SHORT).show();
@@ -242,11 +244,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }).start();
     }
     @SuppressLint("MissingPermission")
-    public static void bl_Status(){
+    private void bl_Status(){
         if(connect_ok) {
             bl_data.setTextColor(Color.parseColor("#00ff66"));
             bl_data.setTextSize(18);
-            bl_data.setText(defaultName);
+            bl_data.setText(readDate("defaultName"));
         }else {
             bl_data.setTextColor(Color.parseColor("#CCCCCC"));
             bl_data.setTextSize(18);

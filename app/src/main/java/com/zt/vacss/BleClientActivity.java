@@ -1,8 +1,5 @@
 package com.zt.vacss;
 
-
-import static com.zt.vacss.MainActivity.bl_Status;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
@@ -45,8 +42,8 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 /** @noinspection deprecation*/
 public class BleClientActivity extends AppCompatActivity implements EasyPermissions.RationaleCallbacks {
-    public static String inputData,defaultName;
-    private final List<BluetoothDevice> mDeviceList = new ArrayList<>();
+    public static String inputData;
+    public static List<BluetoothDevice> mDeviceList = new ArrayList<>();
     private static final BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     private RecyclerView mRecyclerView;
     public static BluetoothSocket mSocket;
@@ -54,7 +51,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     private static OutputStream outputStream;
     private Button re_scan;
     private ProgressDialog pd;
-    private int item_locale;
+    public static int item_locale;
     public static boolean connect_ok;
     private BlueDeviceItemAdapter mRecycler;
     private SharedPreferences.Editor editor;
@@ -246,19 +243,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                         break;
                     case BluetoothAdapter.ACTION_DISCOVERY_FINISHED:
                         stopDiscovery();
-                        break;
-                    case BluetoothDevice.ACTION_ACL_CONNECTED:
-                        showToast("连接成功");
-                        editor.putString("online", mDeviceList.get(item_locale).getAddress());
-                        defaultName = mDeviceList.get(item_locale).getName();
-                        editor.apply();
-                        connect_ok=true;
-                        bl_Status();
-                        break;
-                    case BluetoothDevice.ACTION_ACL_DISCONNECTED:
-                        showToast("连接断开");
-                        connect_ok=false;
-                        bl_Status();
                         break;
                 }
             }
