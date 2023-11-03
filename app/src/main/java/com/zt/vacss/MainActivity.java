@@ -5,7 +5,6 @@ import static com.zt.vacss.BleClientActivity.connectToDevice;
 import static com.zt.vacss.BleClientActivity.connect_ok;
 import static com.zt.vacss.BleClientActivity.disconnectFromDevice;
 import static com.zt.vacss.BleClientActivity.item_locale;
-import static com.zt.vacss.BleClientActivity.mDeviceList;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -34,15 +33,17 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 
 import pub.devrel.easypermissions.EasyPermissions;
 /** @noinspection deprecation*/
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks{
-    private final String TAG = "TAG";
-    BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-    private final List<BluetoothDevice> mList = new ArrayList<>();
+    private static final String TAG = "MainActivity";
+    private final BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    public final List<BluetoothDevice> mList = new ArrayList<>();
+    public static ArrayList<BluetoothDevice> listWithoutDuplicates;
     private TextView rssi_value;
     @SuppressLint("StaticFieldLeak")
     public  static TextView bl_data;
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     long lastBack = 0;
     private SharedPreferences.Editor editor;
     private boolean defaultScan;
+    public static volatile boolean discoveryFinished;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -183,7 +185,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         @Override
         public void onReceive(Context context, Intent intent) {
             BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);//获取此时找到的远程设备对象
-            if (readDate("deviceName")!=null && readDate("deviceName").equals(Objects.requireNonNull(device).getAddress())) {//判断远程设备是否与用户目标设备相同
+            if (device!=null && readDate("deviceName")!=null && readDate("deviceName").equals(Objects.requireNonNull(device).getAddress())) {//判断远程设备是否与用户目标设备相同
                 short rssi = Objects.requireNonNull(intent.getExtras()).getShort(BluetoothDevice.EXTRA_RSSI);//获取额外rssi值
                 rssi_value.setText(device.getName() + "\n"+"信号值:" + rssi);//显示rssi到控件上
                 mBluetoothAdapter.cancelDiscovery();//关闭搜索
@@ -192,17 +194,19 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 rssi_value.setText("❀");
             }
             if(device !=null && device.getName()!=null){
+                Log.d(TAG, "onReceive: "+"name:->"+device.getName()+"\n"+device.getAddress());
                 mList.add(device);
             }
             if(device != null && BluetoothDevice.ACTION_ACL_CONNECTED.equals(intent.getAction())){
                 Toast.makeText(context, "连接成功", Toast.LENGTH_SHORT).show();
                 if(readDate("defaultName")==null) {
-                    editor.putString("online", mDeviceList.get(item_locale).getAddress());
-                    editor.putString("defaultName",mDeviceList.get(item_locale).getName());
+                    editor.putString("online", listWithoutDuplicates.get(item_locale).getAddress());
+                    editor.putString("defaultName",listWithoutDuplicates.get(item_locale).getName());
                     editor.apply();
                 }
                 connect_ok=true;
                 defaultScan = false;
+                mList.clear();
                 bl_Status();
             }
             if(BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(intent.getAction())){
@@ -211,11 +215,17 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 bl_Status();
             }
             if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(intent.getAction())){
-                for (int i=0;i<mList.size();i++){
-                    if(mList.get(i)!=null && mList.get(i).getAddress().equals(readDate("online"))){
-                        Log.d(TAG, "onReceive: 连接到设备");
-                        connectToDevice(mList.get(i));
-                        break;
+                discoveryFinished=true;
+                LinkedHashSet<BluetoothDevice> hashSet = new LinkedHashSet<>(mList);
+                listWithoutDuplicates = new ArrayList<>(hashSet);
+                Log.d(TAG, "onReceive: "+listWithoutDuplicates);
+                if(!connect_ok) {
+                    for (int i = 0; i < listWithoutDuplicates.size(); i++) {
+                        if (listWithoutDuplicates.get(i).getAddress().equals(readDate("online"))) {
+                            Log.d(TAG, "onReceive: 连接到设备");
+                            connectToDevice(listWithoutDuplicates.get(i));
+                            break;
+                        }
                     }
                 }
             }
@@ -234,10 +244,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     @SuppressLint("MissingPermission")
     private void scanRssiValue(){
         new Thread(() -> {
-            while (!exit) {
-                exit=true;
-                mBluetoothAdapter.startDiscovery();
-                sleepMS();
+            while (true) {
+                if(!exit) {
+                    exit = true;
+                    mBluetoothAdapter.startDiscovery();
+                }
             }
         }).start();
     }
@@ -258,20 +269,12 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         new Thread(() -> {
             while (true) {
                 if (readDate("online") != null && !connect_ok && !defaultScan) {
-                    mList.clear();
                     mBluetoothAdapter.startDiscovery();
                     defaultScan=true;
-                    Log.d(this.getLocalClassName(), "defaultDevice: 开始发现设备");
+                    Log.d(TAG, "defaultDevice: 开始发现设备");
                 }
             }
         }).start();
-    }
-    private void sleepMS(){
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
     }
     protected void onResume() {
         startEnableBluetooth();

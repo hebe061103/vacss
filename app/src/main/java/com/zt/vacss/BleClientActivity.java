@@ -1,19 +1,20 @@
 package com.zt.vacss;
 
+import static com.zt.vacss.MainActivity.discoveryFinished;
+import static com.zt.vacss.MainActivity.listWithoutDuplicates;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.Vibrator;
 import android.util.Log;
 import android.view.Gravity;
@@ -33,16 +34,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
 /** @noinspection deprecation*/
 public class BleClientActivity extends AppCompatActivity implements EasyPermissions.RationaleCallbacks {
+    private static final String TAG = "BleClientActivity";
     public static String inputData;
-    public static List<BluetoothDevice> mDeviceList = new ArrayList<>();
     private static final BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     private RecyclerView mRecyclerView;
     public static BluetoothSocket mSocket;
@@ -52,7 +51,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     private ProgressDialog pd;
     public static int item_locale;
     public static boolean connect_ok;
-    private BlueDeviceItemAdapter mRecycler;
     private SharedPreferences.Editor editor;
     @SuppressLint("MissingPermission")
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,29 +58,42 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         setContentView(R.layout.activity_bluetooth_scan);
         SharedPreferences sp = getSharedPreferences("data", MODE_PRIVATE);//获取 SharedPreferences对象
         editor = sp.edit(); // 获取编辑器对象
-        registerBluetoothListener();
-        initList();
         re_scan = findViewById(R.id.re_scan);
         re_scan.setOnClickListener(v -> {
             goAnim();
-            mDeviceList.clear();
-            BlueDeviceItemAdapter mRecycler = new BlueDeviceItemAdapter(mDeviceList, BleClientActivity.this);
-            mRecyclerView.setAdapter(mRecycler);
-            BleClientActivity.this.searchBluetooth();
+            searchBluetooth();
         });
         searchBluetooth();
     }
-    private void initList() {
-        //设置固定大小
-        mRecyclerView = findViewById(R.id.rv_device_list);
-        mRecyclerView.setHasFixedSize(true);
-        //创建线性布局
+    private void displayList() {
+        mRecyclerView = findViewById(R.id.rv_device_list);//设置固定大小
+        mRecyclerView.setHasFixedSize(true);//创建线性布局
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         layoutManager.setOrientation(RecyclerView.VERTICAL);
-        mRecyclerView.setLayoutManager(layoutManager);
-        mRecycler = new BlueDeviceItemAdapter(mDeviceList, this);
         mRecyclerView.addItemDecoration(new LinearSpacingItemDecoration(this, 10));//添加间距
         mRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL)); //添加分隔线
+        mRecyclerView.setLayoutManager(layoutManager);
+        BlueDeviceItemAdapter mRecycler = new BlueDeviceItemAdapter(listWithoutDuplicates, this);
+        mRecyclerView.setAdapter(mRecycler);
+        mRecycler.setRecyclerItemClickListener(position -> {
+            goAnim();
+            item_locale = position;
+            BleClientActivity.this.showPopupMenu(mRecyclerView.getChildAt(position));
+        });
+        mRecycler.setRecyclerItemLongClickListener(position -> {
+            if(isPaired(listWithoutDuplicates.get(item_locale))) {
+                goAnim();
+                item_locale=position;
+                new AlertDialog.Builder(BleClientActivity.this)
+                        .setTitle("取消配对")
+                        .setMessage("确定吗?")
+                        .setPositiveButton("取消", null)
+                        .setNegativeButton("确定", (dialog, which) -> {
+                            unpairDevice(listWithoutDuplicates.get(item_locale));
+                            searchBluetooth();
+                        }).show();
+            }
+        });
     }
 
     @SuppressLint("ObsoleteSdkInt")
@@ -92,50 +103,43 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                 ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.BLUETOOTH_SCAN},100);
             }
         }
+        discoveryFinished=false;
+        SharedPreferences sp = getSharedPreferences("data",MODE_PRIVATE);//获取 SharedPreferences对象
+        SharedPreferences.Editor editor = sp.edit(); // 获取编辑器对象
+        editor.remove("online"); // 根据key删除数据
+        editor.remove("defaultName");
+        editor.apply();
+        if(connect_ok){disconnectFromDevice();}
+        if(listWithoutDuplicates!=null){listWithoutDuplicates.clear();}
+        displayList();
         mBluetoothAdapter.startDiscovery();
         re_scan.setText("正在扫描");
         pd = new ProgressDialog(this);
         pd.setMessage("正在扫描,请稍等......");
         pd.show();
         pd.setCancelable(false);
+        new Thread(() -> {
+            //noinspection StatementWithEmptyBody
+            while (!discoveryFinished);
+            Log.d(TAG, "run: 扫描完成");
+            Message message = new Message();
+            message.what = 1;
+            myHandler.sendMessage(message);
+        }).start();
     }
+    @SuppressLint("HandlerLeak")
+    Handler myHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            if (msg.what == 1) {
+                stopDiscovery();
+            }
+        }
+    };
     private void stopDiscovery() {
+        displayList();
         pd.dismiss();
         re_scan.setText("重新扫描");
     }
-
-    @SuppressLint("MissingPermission")
-    private void foundBlueDevice(Intent intent) {
-        BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-        if (!mDeviceList.contains(device)) {
-            assert device != null;
-            if (!(device.getName() == null)) {
-                mDeviceList.add(device);
-                mRecyclerView.setAdapter(mRecycler);
-                mRecycler.setRecyclerItemClickListener(position -> {
-                    goAnim();
-                    item_locale = position;
-                    BleClientActivity.this.showPopupMenu(mRecyclerView.getChildAt(position));
-                });
-                mRecycler.setRecyclerItemLongClickListener(position -> {
-                if(isPaired(mDeviceList.get(item_locale))) {
-                    goAnim();
-                    item_locale=position;
-                    new AlertDialog.Builder(BleClientActivity.this)
-                            .setTitle("取消配对")
-                            .setMessage("确定吗?")
-                            .setPositiveButton("取消", null)
-                            .setNegativeButton("确定", (dialog, which) -> {
-                                unpairDevice(mDeviceList.get(item_locale));
-                                mDeviceList.clear();
-                                searchBluetooth();
-                            }).show();
-                    }
-                });
-            }
-        }
-    }
-
     @SuppressLint("MissingPermission")
     private void showPopupMenu(final View view) {
         final PopupMenu popupMenu = new PopupMenu(this, view, Gravity.END);
@@ -146,14 +150,14 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
             int itemId = item.getItemId();
             if (itemId == R.id.connect_item) {//连接蓝牙
                 goAnim();
-                connectToDevice(mDeviceList.get(item_locale));
+                connectToDevice(listWithoutDuplicates.get(item_locale));
             } else if (itemId == R.id.disconnect_item) {//断开连接
                 goAnim();
                 disconnectFromDevice();
                 connect_ok=false;
             }else if (itemId == R.id.add_rssi_check) {//添加到指定信号检测
                 goAnim();
-                editor.putString("deviceName",mDeviceList.get(item_locale).getAddress() );
+                editor.putString("deviceName",listWithoutDuplicates.get(item_locale).getAddress() );
                 editor.apply();
             }
             return false;
@@ -228,35 +232,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
                 // 处理关闭异常
             }
         }
-    }
-    public final BroadcastReceiver mBluetoothReceiver = new BroadcastReceiver() {
-        @SuppressLint("MissingPermission")
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action != null) {
-                showLog("blue action: " + action);
-                switch (action) {
-                    case BluetoothDevice.ACTION_FOUND:
-                        foundBlueDevice(intent);
-                        break;
-                    case BluetoothAdapter.ACTION_DISCOVERY_FINISHED:
-                        stopDiscovery();
-                        break;
-                }
-            }
-        }
-    };
-
-    public void registerBluetoothListener() {
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED); //监听蓝牙关闭和打开状态
-        filter.addAction(BluetoothDevice.ACTION_FOUND); //搜索发现设备
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED); //搜索完毕
-        filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED); //配对状态
-        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);//蓝牙连接成功
-        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED); //蓝牙连接失败
-        registerReceiver(mBluetoothReceiver, filter);
     }
     /**
      * 重写方法将权限请求结果传递给EasyPermission
