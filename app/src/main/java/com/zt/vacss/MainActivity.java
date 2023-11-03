@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     private Boolean exit=false;
     long lastBack = 0;
     private SharedPreferences.Editor editor;
-    private boolean defaultScan;
+    public static boolean defaultScan;
     public static volatile boolean discoveryFinished;
 
     @Override
@@ -194,7 +194,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 rssi_value.setText("❀");
             }
             if(device !=null && device.getName()!=null){
-                Log.d(TAG, "onReceive: "+"name:->"+device.getName()+"\n"+device.getAddress());
+                Log.d(TAG, "name:"+device.getName()+"\n"+device.getAddress());
                 mList.add(device);
             }
             if(device != null && BluetoothDevice.ACTION_ACL_CONNECTED.equals(intent.getAction())){
@@ -219,13 +219,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 LinkedHashSet<BluetoothDevice> hashSet = new LinkedHashSet<>(mList);
                 listWithoutDuplicates = new ArrayList<>(hashSet);
                 Log.d(TAG, "onReceive: "+listWithoutDuplicates);
-                if(!connect_ok) {
-                    for (int i = 0; i < listWithoutDuplicates.size(); i++) {
-                        if (listWithoutDuplicates.get(i).getAddress().equals(readDate("online"))) {
-                            Log.d(TAG, "onReceive: 连接到设备");
-                            connectToDevice(listWithoutDuplicates.get(i));
-                            break;
-                        }
+                for (int i = 0; i < listWithoutDuplicates.size(); i++) {
+                    if (listWithoutDuplicates.get(i).getAddress().equals(readDate("online"))) {
+                        Log.d(TAG, "onReceive: 连接到设备");
+                        connectToDevice(listWithoutDuplicates.get(i));
+                        break;
                     }
                 }
             }
@@ -271,7 +269,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 if (readDate("online") != null && !connect_ok && !defaultScan) {
                     mBluetoothAdapter.startDiscovery();
                     defaultScan=true;
-                    Log.d(TAG, "defaultDevice: 开始发现设备");
+                    Log.d(TAG, "defaultDevice: 开始搜索设备");
                 }
             }
         }).start();

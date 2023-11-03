@@ -1,5 +1,6 @@
 package com.zt.vacss;
 
+import static com.zt.vacss.MainActivity.defaultScan;
 import static com.zt.vacss.MainActivity.discoveryFinished;
 import static com.zt.vacss.MainActivity.listWithoutDuplicates;
 
@@ -63,6 +64,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
             goAnim();
             searchBluetooth();
         });
+        defaultScan=true;
         searchBluetooth();
     }
     private void displayList() {
@@ -104,12 +106,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
             }
         }
         discoveryFinished=false;
-        SharedPreferences sp = getSharedPreferences("data",MODE_PRIVATE);//获取 SharedPreferences对象
-        SharedPreferences.Editor editor = sp.edit(); // 获取编辑器对象
-        editor.remove("online"); // 根据key删除数据
-        editor.remove("defaultName");
-        editor.apply();
-        if(connect_ok){disconnectFromDevice();}
         if(listWithoutDuplicates!=null){listWithoutDuplicates.clear();}
         displayList();
         mBluetoothAdapter.startDiscovery();
@@ -150,6 +146,12 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
             int itemId = item.getItemId();
             if (itemId == R.id.connect_item) {//连接蓝牙
                 goAnim();
+                SharedPreferences sp = getSharedPreferences("data",MODE_PRIVATE);//获取 SharedPreferences对象
+                SharedPreferences.Editor editor = sp.edit(); // 获取编辑器对象
+                editor.remove("online"); // 根据key删除数据
+                editor.remove("defaultName");
+                editor.apply();
+                if (connect_ok) disconnectFromDevice();
                 connectToDevice(listWithoutDuplicates.get(item_locale));
             } else if (itemId == R.id.disconnect_item) {//断开连接
                 goAnim();
@@ -264,6 +266,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         Log.d("BleClientActivity:", "showLog: " + text);
     }
     protected void onDestroy() {
+        defaultScan=false;
         super.onDestroy();
     }
 }

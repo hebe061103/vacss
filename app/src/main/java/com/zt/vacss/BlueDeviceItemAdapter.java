@@ -33,7 +33,7 @@ public class BlueDeviceItemAdapter extends RecyclerView.Adapter<BlueDeviceItemAd
 
     @SuppressLint({"MissingPermission", "SetTextI18n"})
     @Override
-    public void onBindViewHolder(MyViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         if(!isPaired(mDeviceList.get(position))) {
             String no_bond=mDeviceList.get(position).getName() + "\n" + mDeviceList.get(position).getAddress();
             holder.tv.setText(no_bond);
@@ -60,21 +60,15 @@ public class BlueDeviceItemAdapter extends RecyclerView.Adapter<BlueDeviceItemAd
             super(itemView);
             //找到控件
             tv = itemView.findViewById(R.id.bt_text);
-            itemView.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View view) {
-                    if (null != MonItemLongClickListener) {
-                        MonItemLongClickListener.onRecyclerItemLongClickListener(getAdapterPosition());
-                    }
-                    return true;
+            itemView.setOnLongClickListener(view -> {
+                if (null != MonItemLongClickListener) {
+                    MonItemLongClickListener.onRecyclerItemLongClickListener(getAdapterPosition());
                 }
+                return true;
             });
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if (null != MonItemClickListener) {
-                        MonItemClickListener.onRecyclerItemClickListener(getAdapterPosition());
-                    }
+            itemView.setOnClickListener(view -> {
+                if (null != MonItemClickListener) {
+                    MonItemClickListener.onRecyclerItemClickListener(getAdapterPosition());
                 }
             });
         }
