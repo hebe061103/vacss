@@ -205,7 +205,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                     editor.apply();
                 }
                 connect_ok=true;
-                defaultScan = false;
                 mList.clear();
                 bl_Status();
             }
@@ -226,6 +225,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                         break;
                     }
                 }
+                defaultScan = false;
             }
         }
     };
