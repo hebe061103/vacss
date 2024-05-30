@@ -7,7 +7,4 @@
     <item
         android:id="@+id/disconnect_item"
         android:title="断开蓝牙"/>
-    <item
-        android:id="@+id/add_rssi_check"
-        android:title="目标信号检测"/>
 </menu>

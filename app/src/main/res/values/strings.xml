@@ -17,9 +17,12 @@
     <string name="about_about">关于</string>
     <string name="blue_list">蓝牙列表</string>
     <string name="display_rssi_value">显示信号值</string>
-    <string name="电池电压">电池电压:</string>
-    <string name="电容电压">电容电压:</string>
-    <string name="电池伏特">电池伏特</string>
-    <string name="电容伏特">电容伏特</string>
+    <string name="left_speed">左转速度:</string>
+    <string name="right_speed">右转速度:</string>
+    <string name="当前延时ms">当前延时ms</string>
     <string name="连接状态">连接状态</string>
+    <string name="device_debug">调试设备</string>
+    <string name="left_time">左转时间</string>
+    <string name="right_time">右转时间</string>
+    <string name="run">启用</string>
 </resources>

@@ -51,28 +51,28 @@ public class Engineeringmode extends AppCompatActivity {
                 ck_sent.setEnabled(true);
                 receiveData();
                 sendEditProcess();
-                displayData();
+                displayData(jieShou);
             }
         });
     }
 
     private void sendEditProcess() {
         ck_sent.setOnClickListener(view -> {
-            String sendEdit = faSong.getText().toString();
-            if(!sendEdit.isEmpty()) {
-                sendData(sendEdit);
+            String sendStr = faSong.getText().toString();
+            if(!sendStr.isEmpty()) {
+                sendData(sendStr);
                 faSong.setText("");
                 Toast.makeText(Engineeringmode.this, "巳发送", Toast.LENGTH_SHORT).show();
             }
         });
     }
-    private void displayData(){
+    private void displayData(TextView s){
         new Thread(){
             /** @noinspection InfiniteLoopStatement*/
             public void run(){
                 while (true){
                     if(inputData!=null) {
-                        jieShou.setText(inputData);
+                        s.setText(inputData);
                     }
                 }
             }

@@ -4,6 +4,9 @@
         android:id="@+id/scan_bt"
         android:title="@string/blue_list"/>
     <item
+        android:id="@+id/debug_device"
+        android:title="@string/device_debug"/>
+    <item
         android:id="@+id/about"
         android:title="@string/about_about"/>
 </menu>

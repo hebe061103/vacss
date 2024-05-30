@@ -1,10 +1,10 @@
 package com.zt.vacss;
 
-
-import static com.zt.vacss.BleClientActivity.connectToDevice;
 import static com.zt.vacss.BleClientActivity.connect_ok;
 import static com.zt.vacss.BleClientActivity.disconnectFromDevice;
-import static com.zt.vacss.BleClientActivity.item_locale;
+import static com.zt.vacss.BleClientActivity.inputData;
+import static com.zt.vacss.BleClientActivity.receiveData;
+import static com.zt.vacss.BleClientActivity.sendData;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -19,9 +19,12 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.Vibrator;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
@@ -33,25 +36,28 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 
 import pub.devrel.easypermissions.EasyPermissions;
+
 /** @noinspection deprecation*/
-public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks{
-    private static final String TAG = "MainActivity";
+public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
     private final BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-    public final List<BluetoothDevice> mList = new ArrayList<>();
-    public static ArrayList<BluetoothDevice> listWithoutDuplicates;
-    private TextView rssi_value;
+    public static List<BluetoothDevice> mlist = new ArrayList<>();
     @SuppressLint("StaticFieldLeak")
-    public  static TextView bl_data;
-    private Boolean exit=false;
+    public static CircularProgressView progress_bar,progress_bar2;
+    public static SharedPreferences sp;
+    public static SharedPreferences.Editor editor ;
+    public static String[] parts;
+    public static int left_pwm,right_pwm;
+    @SuppressLint("StaticFieldLeak")
+    public static TextView bl_data;
+    @SuppressLint("StaticFieldLeak")
+    public static Button mEA;
+    public ImageView menu_bt;
+    public static Message message;
     long lastBack = 0;
-    private SharedPreferences.Editor editor;
-    public static boolean defaultScan;
-    public static volatile boolean discoveryFinished;
+    public static volatile boolean discoveryFinished,ScanING,hc06_online;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,11 +66,15 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         init();
         defaultDevice();
     }
+
     private void init() {
-        CircularProgressView progress_bar = findViewById(R.id.progress_bar);
-        CircularProgressView progress_bar2 = findViewById(R.id.progress_bar2);
-        SharedPreferences sp = getSharedPreferences("data", MODE_PRIVATE);//获取 SharedPreferences对象
+        mEA = findViewById(R.id.EA);
+        menu_bt = findViewById(R.id.menu_img);
+        bl_data = findViewById(R.id.bl_connect_status);
+        SharedPreferences sp = getSharedPreferences("BlueInfo",MODE_PRIVATE);//获取 SharedPreferences对象
         editor = sp.edit(); // 获取编辑器对象
+        progress_bar = findViewById(R.id.progress_bar);
+        progress_bar2 = findViewById(R.id.progress_bar2);
         //设置过滤器，过滤因远程蓝牙设备被找到而发送的广播 BluetoothDevice.ACTION_FOUND
         IntentFilter iFilter=new IntentFilter();
         iFilter.addAction(BluetoothDevice.ACTION_FOUND);
@@ -73,52 +83,103 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         iFilter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         registerReceiver(foundReceiver, iFilter);
         //设置广播接收器和安装过滤器
-        ImageView menu_bt = findViewById(R.id.menu_img);
-        bl_data = findViewById(R.id.bl_connect_status);
-        rssi_value = findViewById(R.id.display_value);
+        mEA.setOnClickListener(view -> {
+            if (mEA.getText().toString().equals("启 用")) {
+                goAnim();
+                sendData("y");
+                receiveData();//接收单片机返回的数据
+            }
+            if (mEA.getText().toString().equals("停 用")) {
+                goAnim();
+                sendData("z");
+                receiveData();//接收单片机返回的数据
+            }
+        });
         menu_bt.setOnClickListener(view -> {
             goAnim();
             MainActivity.this.showPopupMenu(menu_bt);
         });
-        rssi_value.setOnLongClickListener(view -> {
-            if (!(readDate("deviceName") == null)) {
+        bl_data.setOnLongClickListener(view -> {
+            goAnim();
+            if (readDate() != null) {
                 new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("取消信号检测吗?")
+                        .setTitle("是否要删除默认连接?")
                         .setMessage("确定吗?")
                         .setPositiveButton("取消", null)
                         .setNegativeButton("确定", (dialog, which) -> {
-                            deleteData("deviceName");
-                            rssi_value.setText("❀");
-                            exit = true;
+                            deleteData("blueDeviceName");
+                            deleteData("blueDeviceAddress");
+                            disconnectFromDevice();
+                            connect_ok = false;
+                            hc06_online=false;
+                            bl_Status();
                         })
                         .show();
             }
             return true;
         });
-        bl_data.setOnLongClickListener(view -> {
-                if (readDate("online")!=null) {
-                    new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("是否要删除默认连接?")
-                            .setMessage("确定吗?")
-                            .setPositiveButton("取消", null)
-                            .setNegativeButton("确定", (dialog, which) -> {
-                                disconnectFromDevice();
-                                connect_ok=false;
-                                deleteData("online");
-                                deleteData("defaultName");
-                                bl_Status();
-                            })
-                            .show();
+        new Thread(() -> {
+            try {
+                Thread.sleep(3000);
+                while(true){
+                    Thread.sleep(500);
+                    if (inputData!=null&&inputData.contains("l_pwm")) {parts = inputData.split(",");left_pwm=Integer.parseInt(parts[1]);}
+                    if (inputData!=null&&inputData.contains("r_pwm")) {parts = inputData.split(",");right_pwm=Integer.parseInt(parts[1]);}
+                    if (inputData != null && inputData.contains("run")) {mEA.setTextColor(Color.parseColor("#99FF66"));message = myHandler.obtainMessage();message.what = 8;myHandler.sendMessage(message);}
+                    if (inputData != null && inputData.contains("stop")) {mEA.setTextColor(Color.parseColor("#99FF66"));message = myHandler.obtainMessage();message.what = 9;myHandler.sendMessage(message);}
+                    if (hc06_online) {message = myHandler.obtainMessage();message.what = 2;myHandler.sendMessage(message);}else{message = myHandler.obtainMessage();message.what = 3;myHandler.sendMessage(message);}
+                    if (left_pwm!=0) {message = myHandler.obtainMessage();message.what = 4;myHandler.sendMessage(message);}else {message = myHandler.obtainMessage();message.what = 5;myHandler.sendMessage(message);}
+                    if (right_pwm!=0) {message = myHandler.obtainMessage();message.what = 6;myHandler.sendMessage(message);}else {message = myHandler.obtainMessage();message.what = 7;myHandler.sendMessage(message);}
                 }
-            return true;
-        });
-        progress_bar.setProgress(50);
-        progress_bar.setText(50+"%");
-        progress_bar2.setProgress(20);
-        progress_bar2.setText(20+"%");
-
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
-
+    @SuppressLint("HandlerLeak")
+    Handler myHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            if (msg.what==2){mEA.setTextColor(Color.parseColor("#99FF66"));}
+            if (msg.what==3){mEA.setTextColor(Color.parseColor("#CCCCCC"));}
+            if (msg.what==4){right_pwm=0;progress_bar.setProgress(left_pwm);progress_bar.setText(left_pwm + "%");progress_bar2.setProgress(0);progress_bar2.setText(0 + "%");}
+            if (msg.what==5){progress_bar.setProgress(0);progress_bar.setText(0 + "%");}
+            if (msg.what==6){left_pwm=0;progress_bar.setProgress(0);progress_bar.setText(0 + "%");progress_bar2.setProgress(right_pwm);progress_bar2.setText(right_pwm + "%");}
+            if (msg.what==7){progress_bar2.setProgress(0);progress_bar2.setText(0 + "%");}
+            if (msg.what==8){mEA.setText("停 用");}
+            if (msg.what==9){mEA.setText("启 用");}
+        }
+    };
+    /**
+     * 当找到一个远程蓝牙设备时执行的广播接收者
+     *
+     */
+    public final BroadcastReceiver foundReceiver = new BroadcastReceiver() {
+        @SuppressLint({"MissingPermission", "SetTextI18n", "UnsafeIntentLaunch"})
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);//获取此时找到的远程设备对象
+            if(device !=null && device.getName()!=null){
+                Log.d("找到的设备:", "name:"+device.getName()+"\n"+device.getAddress());
+                if (!mlist.contains(device)){mlist.add(device);}
+            }
+            if(BluetoothDevice.ACTION_ACL_CONNECTED.equals(intent.getAction())){
+                Log.d("连接状态:", "连接成功");
+                Toast.makeText(context, "连接成功", Toast.LENGTH_SHORT).show();
+                connect_ok=true;
+            }
+            if(BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(intent.getAction())){
+                Log.d("连接状态:", "连接断开");
+                Toast.makeText(context, "连接断开", Toast.LENGTH_SHORT).show();
+                connect_ok=false;
+                hc06_online=false;
+            }
+            if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(intent.getAction())){
+                Log.d("扫描状态:", "扫描完成");
+                //Toast.makeText(context, "扫描完成", Toast.LENGTH_SHORT).show();
+                discoveryFinished = true;
+            }
+        }
+    };
     @SuppressLint("MissingPermission")
     private void showPopupMenu(final View view) {
         final PopupMenu popupMenu = new PopupMenu(this, view);
@@ -128,12 +189,14 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         popupMenu.setOnMenuItemClickListener(item -> {
             int itemId = item.getItemId();
             if (itemId == R.id.scan_bt) {
-                exit=true;
                 goAnim();
                 Intent intent = new Intent(MainActivity.this, BleClientActivity.class);
                 startActivities(new Intent[]{intent});
-            } else if (itemId == R.id.about) {
-                exit=true;
+            }else if (itemId == R.id.debug_device) {
+                goAnim();
+                Intent intent = new Intent(MainActivity.this, DebugDevice.class);
+                startActivities(new Intent[]{intent});
+            }else if (itemId == R.id.about) {
                 goAnim();
                 Intent intent = new Intent(MainActivity.this, about.class);
                 startActivities(new Intent[]{intent});
@@ -143,21 +206,22 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         //显示菜单，不要少了这一步
         popupMenu.show();
     }
+
     private void startEnableBluetooth() {
         if (mBluetoothAdapter == null) {
             Toast.makeText(this, "本设备没有蓝牙功能", Toast.LENGTH_SHORT).show();
             return;
         }
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{
                         Manifest.permission.BLUETOOTH_CONNECT
                 }, 200);
             }
         }
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED){
-                ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.BLUETOOTH_SCAN},100);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH_SCAN}, 100);
             }
         }
         if ((ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED)
@@ -176,109 +240,62 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             startActivityForResult(intent, 200);
         }
     }
-    /**
-     * 当找到一个远程蓝牙设备时执行的广播接收者
-     *
-     */
-    public final BroadcastReceiver foundReceiver = new BroadcastReceiver() {
-        @SuppressLint({"MissingPermission", "SetTextI18n"})
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);//获取此时找到的远程设备对象
-            if (device!=null && readDate("deviceName")!=null && readDate("deviceName").equals(Objects.requireNonNull(device).getAddress())) {//判断远程设备是否与用户目标设备相同
-                short rssi = Objects.requireNonNull(intent.getExtras()).getShort(BluetoothDevice.EXTRA_RSSI);//获取额外rssi值
-                rssi_value.setText(device.getName() + "\n"+"信号值:" + rssi);//显示rssi到控件上
-                mBluetoothAdapter.cancelDiscovery();//关闭搜索
-                exit=false;
-            }else {
-                rssi_value.setText("❀");
-            }
-            if(device !=null && device.getName()!=null){
-                Log.d(TAG, "name:"+device.getName()+"\n"+device.getAddress());
-                mList.add(device);
-            }
-            if(device != null && BluetoothDevice.ACTION_ACL_CONNECTED.equals(intent.getAction())){
-                Toast.makeText(context, "连接成功", Toast.LENGTH_SHORT).show();
-                if(readDate("defaultName")==null) {
-                    editor.putString("online", listWithoutDuplicates.get(item_locale).getAddress());
-                    editor.putString("defaultName",listWithoutDuplicates.get(item_locale).getName());
-                    editor.apply();
-                }
-                connect_ok=true;
-                mList.clear();
-                bl_Status();
-            }
-            if(BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(intent.getAction())){
-                Toast.makeText(context, "连接断开", Toast.LENGTH_SHORT).show();
-                connect_ok=false;
-                bl_Status();
-            }
-            if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(intent.getAction())){
-                discoveryFinished=true;
-                LinkedHashSet<BluetoothDevice> hashSet = new LinkedHashSet<>(mList);
-                listWithoutDuplicates = new ArrayList<>(hashSet);
-                Log.d(TAG, "onReceive: "+listWithoutDuplicates);
-                for (int i = 0; i < listWithoutDuplicates.size(); i++) {
-                    if (listWithoutDuplicates.get(i).getAddress().equals(readDate("online"))) {
-                        Log.d(TAG, "onReceive: 连接到设备");
-                        connectToDevice(listWithoutDuplicates.get(i));
-                        break;
-                    }
-                }
-                defaultScan = false;
-            }
-        }
-    };
-    private String readDate(String key){
-        SharedPreferences sp = getSharedPreferences("data",MODE_PRIVATE);
-        return sp.getString(key,null);
-    }
-    private void deleteData(String key){
-        SharedPreferences sp = getSharedPreferences("data",MODE_PRIVATE);//获取 SharedPreferences对象
-        SharedPreferences.Editor editor = sp.edit(); // 获取编辑器对象
-        editor.remove(key); // 根据key删除数据
-        editor.apply();
-    }
-    @SuppressLint("MissingPermission")
-    private void scanRssiValue(){
-        new Thread(() -> {
-            while (true) {
-                if(!exit) {
-                    exit = true;
-                    mBluetoothAdapter.startDiscovery();
-                }
-            }
-        }).start();
+    private String readDate(){
+        sp = getSharedPreferences("BlueInfo",MODE_PRIVATE);
+        return sp.getString("blueDeviceName",null);
     }
     @SuppressLint("MissingPermission")
     private void bl_Status(){
         if(connect_ok) {
             bl_data.setTextColor(Color.parseColor("#00ff66"));
-            bl_data.setTextSize(18);
-            bl_data.setText(readDate("defaultName"));
+            bl_data.setTextSize(16);
+            bl_data.setText(readDate());
+            get51Data();
         }else {
             bl_data.setTextColor(Color.parseColor("#CCCCCC"));
             bl_data.setTextSize(18);
             bl_data.setText("未连接");
+            mEA.setTextColor(Color.parseColor("#CCCCCC"));
+            bl_data.setTextSize(20);
+            mEA.setText("启 用");
+        }
+    }
+    public static void get51Data(){
+        if (hc06_online) {
+            sendData("a");//连接到了指定蓝牙，发送指定代码获取单片机数据
+            receiveData();//接收单片机返回的数据
+            Log.d("BL_receive", "收到的回复:" + inputData);
         }
     }
     @SuppressLint("MissingPermission")
     private void defaultDevice(){
         new Thread(() -> {
             while (true) {
-                if (readDate("online") != null && !connect_ok && !defaultScan) {
-                    mBluetoothAdapter.startDiscovery();
-                    defaultScan=true;
-                    Log.d(TAG, "defaultDevice: 开始搜索设备");
+                if (!connect_ok) {
+                    if (!ScanING) {
+                        mBluetoothAdapter.startDiscovery();
+                        ScanING = true;
+                        Log.d("Main", "defaultDevice: 开始搜索设备");
+                    }
                 }
             }
         }).start();
     }
+    public static void saveData(String l ,String s){//l为保存的名字，s为要保存的字符串
+        editor.putString(l,s);
+        editor.apply();
+    }
+
+    public static void  deleteData(String l){
+        editor.remove(l); // 根据l删除数据
+        editor.apply();
+    }
+    @SuppressLint("MissingPermission")
     protected void onResume() {
-        startEnableBluetooth();
-        if(!(readDate("deviceName") == null)){exit=false; scanRssiValue();}
-        bl_Status();
         super.onResume();
+        startEnableBluetooth();
+        bl_Status();
+        ScanING=false;
     }
     protected void onDestroy() {
         super.onDestroy();

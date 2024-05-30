@@ -1,18 +1,17 @@
 package com.zt.vacss;
 
-import static com.zt.vacss.MainActivity.defaultScan;
+import static com.zt.vacss.MainActivity.deleteData;
 import static com.zt.vacss.MainActivity.discoveryFinished;
-import static com.zt.vacss.MainActivity.listWithoutDuplicates;
+import static com.zt.vacss.MainActivity.get51Data;
+import static com.zt.vacss.MainActivity.hc06_online;
+import static com.zt.vacss.MainActivity.mlist;
+import static com.zt.vacss.MainActivity.saveData;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.os.Build;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -22,11 +21,11 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.PopupMenu;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -41,9 +40,7 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 /** @noinspection deprecation*/
 public class BleClientActivity extends AppCompatActivity implements EasyPermissions.RationaleCallbacks {
-    private static final String TAG = "BleClientActivity";
     public static String inputData;
-    private static final BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     private RecyclerView mRecyclerView;
     public static BluetoothSocket mSocket;
     private static InputStream inputStream;
@@ -52,21 +49,21 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     private ProgressDialog pd;
     public static int item_locale;
     public static boolean connect_ok;
-    private SharedPreferences.Editor editor;
+
     @SuppressLint("MissingPermission")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bluetooth_scan);
-        SharedPreferences sp = getSharedPreferences("data", MODE_PRIVATE);//获取 SharedPreferences对象
-        editor = sp.edit(); // 获取编辑器对象
         re_scan = findViewById(R.id.re_scan);
         re_scan.setOnClickListener(v -> {
             goAnim();
             searchBluetooth();
         });
-        defaultScan=true;
-        searchBluetooth();
+        MainActivity.ScanING=true;
+        displayList();
+        re_scan.setText("重新扫描");
     }
+
     private void displayList() {
         mRecyclerView = findViewById(R.id.rv_device_list);//设置固定大小
         mRecyclerView.setHasFixedSize(true);//创建线性布局
@@ -75,7 +72,7 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         mRecyclerView.addItemDecoration(new LinearSpacingItemDecoration(this, 10));//添加间距
         mRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL)); //添加分隔线
         mRecyclerView.setLayoutManager(layoutManager);
-        BlueDeviceItemAdapter mRecycler = new BlueDeviceItemAdapter(listWithoutDuplicates, this);
+        BlueDeviceItemAdapter mRecycler = new BlueDeviceItemAdapter(mlist, this);
         mRecyclerView.setAdapter(mRecycler);
         mRecycler.setRecyclerItemClickListener(position -> {
             goAnim();
@@ -83,32 +80,27 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
             BleClientActivity.this.showPopupMenu(mRecyclerView.getChildAt(position));
         });
         mRecycler.setRecyclerItemLongClickListener(position -> {
-            if(isPaired(listWithoutDuplicates.get(item_locale))) {
+            if (isPaired(mlist.get(item_locale))) {
                 goAnim();
-                item_locale=position;
+                item_locale = position;
                 new AlertDialog.Builder(BleClientActivity.this)
                         .setTitle("取消配对")
                         .setMessage("确定吗?")
                         .setPositiveButton("取消", null)
                         .setNegativeButton("确定", (dialog, which) -> {
-                            unpairDevice(listWithoutDuplicates.get(item_locale));
+                            unpairDevice(mlist.get(item_locale));
                             searchBluetooth();
                         }).show();
             }
         });
     }
 
-    @SuppressLint("ObsoleteSdkInt")
+    @SuppressLint({"ObsoleteSdkInt"})
     public void searchBluetooth() {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED){
-                ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.BLUETOOTH_SCAN},100);
-            }
-        }
-        discoveryFinished=false;
-        if(listWithoutDuplicates!=null){listWithoutDuplicates.clear();}
+        if(mlist!=null){mlist.clear();}
         displayList();
-        mBluetoothAdapter.startDiscovery();
+        MainActivity.ScanING=false;
+        discoveryFinished = false;
         re_scan.setText("正在扫描");
         pd = new ProgressDialog(this);
         pd.setMessage("正在扫描,请稍等......");
@@ -117,7 +109,6 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         new Thread(() -> {
             //noinspection StatementWithEmptyBody
             while (!discoveryFinished);
-            Log.d(TAG, "run: 扫描完成");
             Message message = new Message();
             message.what = 1;
             myHandler.sendMessage(message);
@@ -146,21 +137,22 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
             int itemId = item.getItemId();
             if (itemId == R.id.connect_item) {//连接蓝牙
                 goAnim();
-                SharedPreferences sp = getSharedPreferences("data",MODE_PRIVATE);//获取 SharedPreferences对象
-                SharedPreferences.Editor editor = sp.edit(); // 获取编辑器对象
-                editor.remove("online"); // 根据key删除数据
-                editor.remove("defaultName");
-                editor.apply();
-                if (connect_ok) disconnectFromDevice();
-                connectToDevice(listWithoutDuplicates.get(item_locale));
+                if (connect_ok) {Toast.makeText(this, "巳连接请勿重复连接!", Toast.LENGTH_SHORT).show();}
+                connectToDevice(mlist.get(item_locale));
+                if (mlist.get(item_locale).getName().equals("HC06-9600")){
+                    hc06_online=true;
+                    Intent intentService = new Intent(this, MyService.class);
+                    startService(intentService);
+                }
+                saveData("blueDeviceName",mlist.get(item_locale).getName());
+                saveData("blueDeviceAddress",mlist.get(item_locale).getAddress());
             } else if (itemId == R.id.disconnect_item) {//断开连接
                 goAnim();
                 disconnectFromDevice();
                 connect_ok=false;
-            }else if (itemId == R.id.add_rssi_check) {//添加到指定信号检测
-                goAnim();
-                editor.putString("deviceName",listWithoutDuplicates.get(item_locale).getAddress() );
-                editor.apply();
+                hc06_online=false;
+                deleteData("blueDeviceName");
+                deleteData("blueDeviceAddress");
             }
             return false;
         });
@@ -201,12 +193,13 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
     // 发送数据
     public static void sendData(String data) {
         try {
-            outputStream.write(data.getBytes());
+            if (!data.isEmpty()) {
+                outputStream.write(data.getBytes());
+            }
         } catch (IOException e) {
             // 处理发送异常
         }
     }
-
     // 接收数据
     public static void receiveData() {
         new Thread(() -> {
@@ -266,7 +259,11 @@ public class BleClientActivity extends AppCompatActivity implements EasyPermissi
         Log.d("BleClientActivity:", "showLog: " + text);
     }
     protected void onDestroy() {
-        defaultScan=false;
         super.onDestroy();
+        get51Data();
+    }
+    @SuppressLint("MissingPermission")
+    protected void onResume() {
+        super.onResume();
     }
 }

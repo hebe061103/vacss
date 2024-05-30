@@ -1,12 +1,19 @@
 package com.zt.vacss;
 
+import static com.zt.vacss.BleClientActivity.inputData;
+import static com.zt.vacss.BleClientActivity.receiveData;
+import static com.zt.vacss.BleClientActivity.sendData;
+import static com.zt.vacss.MainActivity.get51Data;
+
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -47,4 +54,8 @@ private void clickEvent() {
             }
         });
 }
+    protected void onDestroy() {
+        super.onDestroy();
+        get51Data();
+    }
 }
