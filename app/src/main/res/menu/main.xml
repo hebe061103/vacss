@@ -4,8 +4,8 @@
         android:id="@+id/scan_bt"
         android:title="@string/blue_list"/>
     <item
-        android:id="@+id/debug_device"
-        android:title="@string/device_debug"/>
+        android:id="@+id/bt_save"
+        android:title="@string/bt_save"/>
     <item
         android:id="@+id/about"
         android:title="@string/about_about"/>

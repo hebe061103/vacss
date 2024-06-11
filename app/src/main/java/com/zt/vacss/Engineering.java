@@ -1,13 +1,15 @@
+
 package com.zt.vacss;
 
 import static com.zt.vacss.BleClientActivity.connect_ok;
-import static com.zt.vacss.BleClientActivity.inputData;
+import static com.zt.vacss.BleClientActivity.debugData;
 import static com.zt.vacss.BleClientActivity.receiveData;
 import static com.zt.vacss.BleClientActivity.sendData;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -15,7 +17,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-public class Engineeringmode extends AppCompatActivity {
+public class Engineering extends AppCompatActivity {
+    public static String TAG = "Engineering";
     Button button_server;
     Button hc06_btn;
     private TextView jieShou;
@@ -38,7 +41,7 @@ public class Engineeringmode extends AppCompatActivity {
 
     private void initClick () {
         button_server.setOnClickListener(view -> {
-            Intent intent = new Intent(Engineeringmode.this,BleServerActivity.class);
+            Intent intent = new Intent(Engineering.this,BleServerActivity.class);
             startActivities(new Intent[]{intent});
         });
         hc06_btn.setOnClickListener(v -> {
@@ -49,8 +52,8 @@ public class Engineeringmode extends AppCompatActivity {
                 hc06_btn.setEnabled(false);
                 faSong.setEnabled(true);
                 ck_sent.setEnabled(true);
-                receiveData();
                 sendEditProcess();
+                debugData=null;
                 displayData(jieShou);
             }
         });
@@ -59,10 +62,14 @@ public class Engineeringmode extends AppCompatActivity {
     private void sendEditProcess() {
         ck_sent.setOnClickListener(view -> {
             String sendStr = faSong.getText().toString();
+            Log.d(TAG, "sendStr:"+sendStr);
             if(!sendStr.isEmpty()) {
                 sendData(sendStr);
+                receiveData();
                 faSong.setText("");
-                Toast.makeText(Engineeringmode.this, "巳发送", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "巳发送", Toast.LENGTH_SHORT).show();
+            }else {
+                Toast.makeText(this, "请不要发送空数据", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -71,8 +78,8 @@ public class Engineeringmode extends AppCompatActivity {
             /** @noinspection InfiniteLoopStatement*/
             public void run(){
                 while (true){
-                    if(inputData!=null) {
-                        s.setText(inputData);
+                    if(debugData!=null) {
+                        s.setText(debugData);
                     }
                 }
             }

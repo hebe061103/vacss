@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">vacss</string>
     <string name="menu">菜单</string>
     <string name="about">关于:</string>
@@ -6,7 +6,7 @@
     <string name="server_mode">服务器模式</string>
     <string name="client_mode">客户端模式</string>
     <string name="blue_uuid_info">常用蓝牙服务对应的UUID码</string>
-    <string name="uuid_info">蓝牙串口服务 00001101-0000-1000-8000-00805F9B34FB\n拨号网络服务 00001103-0000-1000-8000-00805F9B34FB\n信息同步服务 00001104-0000-1000-8000-00805F9B34FB\n文件传输服务 00001106-0000-1000-8000-00805F9B34FB\n个人局域网服务 00001115-0000-1000-8000-00805F9B34FB</string>
+    <string name="uuid_info" tools:ignore="TypographyDashes">蓝牙串口服务 00001101–0000–1000-8000-00805F9B34FB\n拨号网络服务 00001103-0000-1000-8000-00805F9B34FB\n信息同步服务 00001104-0000-1000-8000-00805F9B34FB\n文件传输服务 00001106-0000-1000-8000-00805F9B34FB\n个人局域网服务 00001115-0000-1000-8000-00805F9B34FB</string>
     <string name="hc06">HC06串口调试</string>
     <string name="start_service">启动服务</string>
     <string name="tixin">* 请选择需要配对的HC06蓝牙模块</string>
@@ -16,13 +16,8 @@
     <string name="click_sent">点击发送</string>
     <string name="about_about">关于</string>
     <string name="blue_list">蓝牙列表</string>
-    <string name="display_rssi_value">显示信号值</string>
-    <string name="left_speed">左转速度:</string>
-    <string name="right_speed">右转速度:</string>
-    <string name="当前延时ms">当前延时ms</string>
     <string name="连接状态">连接状态</string>
     <string name="device_debug">调试设备</string>
-    <string name="left_time">左转时间</string>
-    <string name="right_time">右转时间</string>
     <string name="run">启用</string>
+    <string name="bt_save">保存设置</string>
 </resources>

@@ -43,9 +43,8 @@
         </activity>
         <activity android:name=".BleClientActivity" />
         <activity android:name=".about" />
-        <activity android:name=".Engineeringmode" />
+        <activity android:name=".Engineering" />
         <activity android:name=".BleServerActivity" />
-        <activity android:name=".DebugDevice" />
     </application>
 
 </manifest>
