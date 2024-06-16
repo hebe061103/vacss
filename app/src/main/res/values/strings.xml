@@ -20,4 +20,5 @@
     <string name="device_debug">调试设备</string>
     <string name="run">启用</string>
     <string name="bt_save">保存设置</string>
+    <string name="default_par">初始设置</string>
 </resources>

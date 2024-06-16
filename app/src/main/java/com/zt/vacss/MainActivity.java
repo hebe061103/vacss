@@ -281,7 +281,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 goAnim(this, 50);
                 Intent intent = new Intent(MainActivity.this, BleClientActivity.class);
                 startActivities(new Intent[]{intent});
-            } else if (itemId == R.id.bt_save) {
+            } else if (itemId == R.id.default_par) {
+                goAnim(this, 50);
+                Intent intent = new Intent(MainActivity.this, default_set.class);
+                startActivities(new Intent[]{intent});
+            }else if (itemId == R.id.bt_save) {
                 if (hc06_online) {
                     goAnim(this, 50);
                     sendData("/");
