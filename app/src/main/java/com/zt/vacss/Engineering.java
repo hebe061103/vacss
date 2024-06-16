@@ -80,6 +80,7 @@ public class Engineering extends AppCompatActivity {
                 while (true){
                     if(debugData!=null) {
                         s.setText(debugData);
+                        debugData=null;
                     }
                 }
             }

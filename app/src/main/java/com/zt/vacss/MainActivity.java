@@ -309,7 +309,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             if (connect_ok) {
                 bl_data.setTextColor(Color.parseColor("#00ff66"));
                 bl_data.setText(readDate());
-                if (readDate() != null && readDate().contains("HC06-9600")) {
+                if (readDate() != null && readDate().equals("HC-06-115200-N-1")) {
                     hc06_online = true;
                     mEA.setTextColor(Color.parseColor("#00ff66"));
                     sendData("a");//向单片机发送代码
