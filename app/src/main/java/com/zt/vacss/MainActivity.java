@@ -38,7 +38,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import pub.devrel.easypermissions.AfterPermissionGranted;
@@ -430,6 +432,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 left_move_time.setText(parts[5]);
                 right_move_speed.setText(parts[3]);
                 right_move_time.setText(parts[7]);
+                Arrays.fill(parts,null);
             }
             if (msg.what == 5) {
                 Log.d(TAG, "myHandler进入了: 5");
@@ -437,6 +440,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 low_left_move_time.setText(parts[5]);
                 right_move_speed_low.setText(parts[3]);
                 low_right_move_time.setText(parts[7]);
+                Arrays.fill(parts,null);
             }
             if (msg.what == 6) {
                 Log.d(TAG, "myHandler进入了: 6");
@@ -446,6 +450,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 sgb_right_Rotation_angle.setText(parts[7]);
                 left_Rotation_angle.setText(parts[9]);
                 right_Rotation_angle.setText(parts[11]);
+                Arrays.fill(parts,null);
             }
             if (msg.what == 7) {
                 Log.d(TAG, "myHandler进入了: 7");
@@ -455,6 +460,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 sgb_right_Rotation_angle_still_time.setText(parts[7]);
                 left_Rotation_angle_still_time.setText(parts[9]);
                 right_Rotation_angle_still_time.setText(parts[11]);
+                Arrays.fill(parts,null);
             }
             if (msg.what == 8){
                 Log.d(TAG, "myHandler进入了: 8");
@@ -480,6 +486,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 sgb_right_Rotation_angle_still_time.setText(parts[38]);
                 left_Rotation_angle_still_time.setText(parts[40]);
                 right_Rotation_angle_still_time.setText(parts[42]);
+                Arrays.fill(parts,null);
             }
         }
     };
