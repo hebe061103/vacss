@@ -52,7 +52,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="36dp"
-        android:text="点击/长按"
+        android:text="左移"
         android:background="@drawable/button"
         app:layout_constraintStart_toEndOf="@+id/textView9"
         app:layout_constraintTop_toTopOf="@+id/guideline33"
@@ -64,7 +64,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="40dp"
         android:background="@drawable/button"
-        android:text="点击/长按"
+        android:text="右移"
         app:layout_constraintStart_toEndOf="@+id/textView12"
         app:layout_constraintTop_toTopOf="@+id/guideline33"
         tools:ignore="HardcodedText" />
