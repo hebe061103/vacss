@@ -1,5 +1,9 @@
 package com.zt.vacss;
 
+import static androidx.core.content.ContextCompat.startActivities;
+import static androidx.core.content.ContextCompat.startActivity;
+import static com.zt.vacss.BleClientActivity.connect_ok;
+import static com.zt.vacss.BleClientActivity.disconnectFromDevice;
 import static com.zt.vacss.BleClientActivity.receiveData;
 import static com.zt.vacss.BleClientActivity.sendData;
 import static com.zt.vacss.MainActivity.goAnim;
@@ -47,7 +51,11 @@ import static com.zt.vacss.MainActivity.sgb_right_Rotation_angle_still_time_add;
 import static com.zt.vacss.MainActivity.sgb_right_Rotation_angle_still_time_del;
 
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.view.View;
+
+import androidx.appcompat.app.AlertDialog;
 
 public class buttonListener implements View.OnClickListener {
     public final Context context;
@@ -61,7 +69,20 @@ public class buttonListener implements View.OnClickListener {
             if (v == mEA){
                 if (mEA.getText().toString().contains("启 用")){
                     goAnim(context,30);
-                    sendData("y");
+                    new AlertDialog.Builder(context)
+                            .setTitle("是否己经装针?")
+                            .setPositiveButton("未装针", (dialogInterface, i) -> {
+                                goAnim(context,30);
+                                sendData("9");//未装针，发送装针指令
+                                Intent intent = new Intent(context, default_set.class);
+                                intent.putExtra("zz", "no");
+                                context.startActivities(new Intent[]{intent});
+                            })
+                            .setNegativeButton("己装针", (dialog, which) -> {
+                                goAnim(context,30);
+                                sendData("y");
+                            })
+                            .show();
                     receiveData();
                 } else if (mEA.getText().toString().contains("停 用")) {
                     goAnim(context,30);
