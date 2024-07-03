@@ -75,7 +75,6 @@ public class buttonListener implements View.OnClickListener {
                                 goAnim(context,30);
                                 sendData("9");//未装针，发送装针指令
                                 Intent intent = new Intent(context, default_set.class);
-                                intent.putExtra("zz", "no");
                                 context.startActivities(new Intent[]{intent});
                             })
                             .setNegativeButton("己装针", (dialog, which) -> {
